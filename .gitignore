@@ -1,4 +1,8 @@
 images
 research
 analysis/data
+analysis/outputs
+analysis/test_data
+analysis/test_predictions
 reports
+tutorials
