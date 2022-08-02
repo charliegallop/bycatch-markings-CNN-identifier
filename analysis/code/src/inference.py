@@ -2,31 +2,33 @@ import numpy as np
 import cv2
 import torch
 import glob as glob
+import os
 
 from model import create_model
+from config import ROOT, NUM_EPOCHS, COLOURS
 
 # set the computation device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # load model and trained weights
 model = create_model(num_classes=5).to(device)
+model_path = os.path.join(ROOT, 'outputs', f'model{NUM_EPOCHS}.pth')
 model.load_state_dict(torch.load(
-    '../../outputs/model100.pth', map_location = device
+    model_path, map_location = device
 ))
 
 model.eval()
 
 # directory where all the images are present
-DIR_TEST = '../../test_data'
+DIR_TEST = os.path.join(ROOT, 'test_data')
 test_images = glob.glob(f"{DIR_TEST}/*")
 print(f"Test instances: {len(test_images)}")
 
 # classes: 0 index is reserved for background
 CLASSES = ['background', 'impression', 'dolphin', 'fin_slice', 'amputation']
 
-
 # define the detection threshold...
 #... any detection having score below this will be discarded
-detection_threshold = 0.6
+detection_threshold = 0.5
 
 # Looping over the image paths and carrying out inference
 for i in range(len(test_images)):
@@ -37,7 +39,7 @@ for i in range(len(test_images)):
     # make the pixel range between 0 and 1
     image /= 255.0
     # bring color channels to front
-    image = np.transpose(image, (2, 0, 1)).astype(np.float)
+    image = np.transpose(image, (2, 0, 1)).astype(np.float64)
     # convert to tensor
     image = torch.tensor(image, dtype = torch.float).cuda()
     # add batch dimension
@@ -62,15 +64,16 @@ for i in range(len(test_images)):
             cv2.rectangle(orig_image,
                         (int(box[0]), int(box[1])),
                         (int(box[2]), int(box[3])),
-                        (0, 0, 255), 2)
-            cv2.putText(orig_image, pred_classes[j], 
+                        (COLOURS[pred_classes[j]]), 3)
+            cv2.putText(orig_image, pred_classes[j] + str(scores[j]), 
                         (int(box[0]), int(box[1]-5)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 
                         2, lineType=cv2.LINE_AA)
             
             cv2.imshow('Prediction', orig_image)
             cv2.waitKey(1)
-            cv2.imwrite(f"../../test_predictions/{image_name}.jpg", orig_image)
+            write_to_dir = os.path.join(ROOT, 'test_predictions', f'{image_name}.jpg')
+            cv2.imwrite(write_to_dir, orig_image)
         print(f"Image {i+1} done...")
         print('-'*50)
 

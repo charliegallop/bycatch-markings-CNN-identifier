@@ -5,21 +5,22 @@ import os
 import glob as glob
 
 from xml.etree import ElementTree as et
-from config import CLASSES, RESIZE_TO, TRAIN_DIR, VALID_DIR, BATCH_SIZE
+from config import CLASSES, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE
 from torch.utils.data import Dataset, DataLoader
 from utils import collate_fn, get_train_transform, get_valid_transform
 
 # the dataset class
 class BycatchDataset(Dataset):
-    def __init__(self, dir_path, width, height, classes, transforms=None):
+    def __init__(self, dir_path, annot_path, width, height, classes, transforms=None):
         self.transforms = transforms
         self.dir_path = dir_path
+        self.annot_path = annot_path
         self.height = height
         self.width = width
         self.classes = classes
 
         # get all the image paths in sorted order
-        self.image_paths = glob.glob(f"{self.dir_path}/*.jpg")
+        self.image_paths = glob.glob(f"{self.dir_path}/*")
         self.all_images = [image_path.split('/')[-1] for image_path in self.image_paths]
         self.all_images = sorted(self.all_images)
 
@@ -35,7 +36,7 @@ class BycatchDataset(Dataset):
 
         # capture the corresponding XML file for getting the annotations
         annot_filename = image_name[:-4] + '.xml'
-        annot_file_path = os.path.join(self.dir_path, annot_filename)
+        annot_file_path = os.path.join(self.annot_path, annot_filename)
 
         boxes = []
         labels = []
@@ -94,15 +95,40 @@ class BycatchDataset(Dataset):
             labels = labels)
             image_resized = sample['image']
             target['boxes'] = torch.Tensor(sample['bboxes'])
-
+        print(image_resized.size(), image_name)
         return image_resized, target
 
     def __len__(self):
         return len(self.all_images)
 
+# move the images from 'forAnnotations' folder to either test or train folder...
+#... based on the annotation files
+
+def move_images_to_project_folder(annot_dir, images_dir, original_path):
+    import shutil
+    annot_paths = glob.glob(f"{annot_dir}/*")
+    annot_names = [annot.split('/')[-1].split('.')[0] for annot in annot_paths]
+
+    # get list of images already in folder
+    image_paths = glob.glob(f"{images_dir}/*")
+    image_names = [image.split('/')[-1].split('.')[0] for image in image_paths]
+
+    for annot in annot_names:
+        if annot not in image_names:
+            path_of_file_to_move = glob.glob(f"{original_path}/{annot}.*")[0]
+            if path_of_file_to_move:
+                print(f"MOVING {annot} TO {images_dir}....")
+                shutil.move(path_of_file_to_move, images_dir)
+
+    
+
+move_images_to_project_folder(TRAIN_ANNOT_DIR, TRAIN_DIR, '/home/charlie/forAnnotation')
+move_images_to_project_folder(VALID_ANNOT_DIR, VALID_DIR, '/home/charlie/forAnnotation')
+
+
 # prepare the final datasets and data loaders
-train_dataset = BycatchDataset(TRAIN_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_train_transform())
-valid_dataset = BycatchDataset(VALID_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
+train_dataset = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_train_transform())
+valid_dataset = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
 train_loader = DataLoader(
     train_dataset,
     batch_size=BATCH_SIZE,
@@ -127,7 +153,7 @@ print(f"Number of validation samples: {len(valid_dataset)}\n")
 if __name__ == '__main__':
     # sanity check of the Dataset pipeline with sample visualization
     dataset = BycatchDataset(
-        TRAIN_DIR, RESIZE_TO, RESIZE_TO, CLASSES
+        TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES
     )
     print(f"Number of training images: {len(dataset)}")
     
