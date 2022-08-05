@@ -5,13 +5,22 @@ import glob as glob
 import os
 
 from model import create_model
-from config import ROOT, NUM_EPOCHS, COLOURS
+from config import ROOT, NUM_EPOCHS, COLOURS, CLASSES, BACKBONE
+
+NUM_CLASSES = len(CLASSES)
+
+# define the detection threshold...
+#... any detection having score below this will be discarded
+detection_threshold = 0.5
+print('-'*50)
+print(f"Inferening on model backbone {BACKBONE} with detection_threshold = {detection_threshold}")
+print('-'*50)
 
 # set the computation device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # load model and trained weights
-model = create_model(num_classes=5).to(device)
-model_path = os.path.join(ROOT, 'outputs', f'model{NUM_EPOCHS}.pth')
+model = create_model(num_classes=NUM_CLASSES, backbone = BACKBONE).to(device)
+model_path = os.path.join(ROOT, 'outputs', BACKBONE, f'model{NUM_EPOCHS}.pth')
 model.load_state_dict(torch.load(
     model_path, map_location = device
 ))
@@ -23,12 +32,8 @@ DIR_TEST = os.path.join(ROOT, 'test_data')
 test_images = glob.glob(f"{DIR_TEST}/*")
 print(f"Test instances: {len(test_images)}")
 
-# classes: 0 index is reserved for background
-CLASSES = ['background', 'impression', 'dolphin', 'fin_slice', 'amputation']
 
-# define the detection threshold...
-#... any detection having score below this will be discarded
-detection_threshold = 0.5
+
 
 # Looping over the image paths and carrying out inference
 for i in range(len(test_images)):
@@ -70,9 +75,9 @@ for i in range(len(test_images)):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 
                         2, lineType=cv2.LINE_AA)
             
-            cv2.imshow('Prediction', orig_image)
-            cv2.waitKey(1)
-            write_to_dir = os.path.join(ROOT, 'test_predictions', f'{image_name}.jpg')
+            # cv2.imshow('Prediction', orig_image)
+            # cv2.waitKey(1)
+            write_to_dir = os.path.join(ROOT, 'test_predictions', BACKBONE, f'{image_name}.jpg')
             cv2.imwrite(write_to_dir, orig_image)
         print(f"Image {i+1} done...")
         print('-'*50)

@@ -95,7 +95,7 @@ class BycatchDataset(Dataset):
             labels = labels)
             image_resized = sample['image']
             target['boxes'] = torch.Tensor(sample['bboxes'])
-        print(image_resized.size(), image_name)
+        #print(image_resized.size(), image_name)
         return image_resized, target
 
     def __len__(self):
@@ -122,8 +122,8 @@ def move_images_to_project_folder(annot_dir, images_dir, original_path):
 
     
 
-move_images_to_project_folder(TRAIN_ANNOT_DIR, TRAIN_DIR, '/home/charlie/forAnnotation')
-move_images_to_project_folder(VALID_ANNOT_DIR, VALID_DIR, '/home/charlie/forAnnotation')
+#move_images_to_project_folder(TRAIN_ANNOT_DIR, TRAIN_DIR, '/home/charlie/forAnnotation')
+#move_images_to_project_folder(VALID_ANNOT_DIR, VALID_DIR, '/home/charlie/forAnnotation')
 
 
 # prepare the final datasets and data loaders
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         cv2.imshow('Image', image)
         cv2.waitKey(0)
         
-    NUM_SAMPLES_TO_VISUALIZE = 5
+    NUM_SAMPLES_TO_VISUALIZE = 10
     for i in range(NUM_SAMPLES_TO_VISUALIZE):
         image, target = dataset[i]
         visualize_sample(image, target)

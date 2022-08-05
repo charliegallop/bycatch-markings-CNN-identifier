@@ -1,10 +1,10 @@
-from config import DEVICE, NUM_CLASSES, NUM_EPOCHS, OUT_DIR
+from config import DEVICE, NUM_CLASSES, NUM_EPOCHS, OUT_DIR, BACKBONE
 from config import VISUALIZE_TRANSFORMED_IMAGES
 from config import SAVE_PLOTS_EPOCH, SAVE_MODEL_EPOCH
 from model import create_model
 from utils import Averager
 from tqdm.auto import tqdm
-from datasets_dolphin import train_loader, valid_loader
+from datasets import train_loader, valid_loader
 from torch_utils.engine import (
     train_one_epoch, evaluate
 )
@@ -27,19 +27,19 @@ def train(train_data_loader, model):
     for i, data in enumerate(prog_bar):
         optimizer.zero_grad()
         images, targets = data
-        print(targets)
+        # print(targets)
         # print(images)
 
         images = list(image.to(DEVICE) for image in images)
         targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in targets]
         loss_dict = model(images, targets)
-        print('loss_dict: ', loss_dict)
-        print('loss_dict_value: ', loss_dict.values())
+        # print('loss_dict: ', loss_dict)
+        # print('loss_dict_value: ', loss_dict.values())
 
         losses = sum(loss for loss in loss_dict.values())
-        print('Losses sum:', losses)
+        # print('Losses sum:', losses)
         loss_value = losses.item()
-        print('losses.item(): ', loss_value)
+        # print('losses.item(): ', loss_value)
         train_loss_list.append(loss_value)
 
         train_loss_hist.send(loss_value)
@@ -85,7 +85,7 @@ def validate(valid_data_loader, model):
 
 if __name__ == '__main__':
     # initialize the model and move to the computation device
-    model = create_model(num_classes=NUM_CLASSES)
+    model = create_model(num_classes=NUM_CLASSES, backbone = BACKBONE)
     model = model.to(DEVICE)
     # get the model parameters
     params = [p for p in model.parameters() if p.requires_grad]
@@ -126,10 +126,10 @@ if __name__ == '__main__':
         start = time.time()
         train_loss = train(train_loader, model)
         val_loss = validate(valid_loader, model)
-        print(f"Epoch #{epoch} train loss: {train_loss_hist.value:.3f}")
-        print(f"Epoch #{epoch} validation loss: {val_loss_hist.value:.3f}")
+        print(f"Epoch #{epoch+1} train loss: {train_loss_hist.value:.3f}")
+        print(f"Epoch #{epoch+1} validation loss: {val_loss_hist.value:.3f}")
         end = time.time()
-        print(f"Took {((end - start) / 60):.3f} minutes for epoch {epoch}")
+        print(f"Took {((end - start) / 60):.3f} minutes for epoch {epoch+1}")
         #evaluate(model, valid_loader, device=DEVICE)
 
         if (epoch+1) % SAVE_MODEL_EPOCH == 0: # save the model after every n epoch
