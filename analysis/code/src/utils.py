@@ -5,7 +5,7 @@ import torch
 import os
 
 from albumentations.pytorch import ToTensorV2
-from config import DEVICE, CLASSES_MARKINGS as classes_markings, CLASSES_DOLPHIN as classes_dolphins
+from config import DEVICE
 from config import ROOT, BACKBONE, THRESHOLD, TEST_PREDS_DIR
 
 # this class keeps track of the training and validation loss values...

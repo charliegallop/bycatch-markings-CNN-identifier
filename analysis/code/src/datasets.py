@@ -26,7 +26,6 @@ class BycatchDataset(Dataset):
         self.all_images = sorted(self.all_images)
 
     
-
     def __getitem__(self, idx):
         # capture the image name and the full image path
         image_name = self.all_images[idx]
@@ -64,6 +63,17 @@ class BycatchDataset(Dataset):
                     print("-"*50)
                     print("DOLPHIN LABEL DOES NOT EXIST")
                     print("-"*50)
+
+                    background_bb = {
+                        'xmin_final': 0.0,
+                        'xmax_final': self.width,
+                        'ymin_final': 0.0,
+                        'ymax_final': self.height
+                    }
+                    # create 'dolphin' bounding box assuming it covers the whole image
+                    boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
+                    labels.append(0)
+                    print(image_name)
         elif self.selection == 'markings':
             if member.find('name').text != 'dolphin':
                 boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
@@ -125,8 +135,8 @@ def move_images_to_project_folder(annot_dir, images_dir, original_path):
 
 
 # prepare the final datasets and data loaders with only markings labels
-train_dataset_markings = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, get_train_transform(), "markings")
-valid_dataset_markings = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, get_valid_transform(), "markings")
+train_dataset_markings = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, "markings", get_train_transform())
+valid_dataset_markings = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, "markings", get_valid_transform())
 
 train_loader_markings = DataLoader(
     train_dataset_markings,
@@ -144,8 +154,8 @@ valid_loader_markings = DataLoader(
 )
 
 # prepare the final datasets and data loaders with only dolphin labels
-train_dataset_dolphin = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, get_train_transform(), "dolphin")
-valid_dataset_dolphin = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, get_valid_transform(), "dolphin")
+train_dataset_dolphin = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin", get_train_transform())
+valid_dataset_dolphin = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin", get_valid_transform())
 
 train_loader_dolphin = DataLoader(
     train_dataset_dolphin,
@@ -177,6 +187,14 @@ if __name__ == '__main__':
     )
     print(f"Number of training images: {len(dataset)}")
     
+    dataset_loader = DataLoader(
+        dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=2,
+        collate_fn=collate_fn
+    )
+
     # function to visualize a single sample
     def visualize_sample(image, target):
         box = target['boxes'][0]
@@ -193,7 +211,7 @@ if __name__ == '__main__':
         cv2.imshow('Image', image)
         cv2.waitKey(0)
         
-    NUM_SAMPLES_TO_VISUALIZE = 10
+    NUM_SAMPLES_TO_VISUALIZE = 1000
     for i in range(NUM_SAMPLES_TO_VISUALIZE):
         image, target = dataset[i]
         visualize_sample(image, target)

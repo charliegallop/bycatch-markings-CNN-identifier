@@ -68,7 +68,7 @@ THRESHOLD = 0.5
 # - "markings"
 # - "all"
 
-LABELS_TO_TRAIN = "markings"
+SELECTION = "dolphin"
 
 
 
