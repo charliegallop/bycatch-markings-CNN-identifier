@@ -1,9 +1,12 @@
 import albumentations as A
 import cv2
 import numpy as np
+import torch
+import os
 
 from albumentations.pytorch import ToTensorV2
 from config import DEVICE, CLASSES as classes
+from config import ROOT, BACKBONE, THRESHOLD, TEST_PREDS_DIR
 
 # this class keeps track of the training and validation loss values...
 #... and helps tp get the average for each epoch
@@ -83,3 +86,32 @@ def show_transformed_image(train_loader):
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
 
+def write_preds_to_file(predictions, image_name, save_dir):
+    save_dir = save_dir
+    with open(f"{save_dir}/{image_name}.txt", 'w') as f:
+        for pred in predictions:
+            f.write(f"{pred}\n")
+
+def save_predictions_as_txt(prediction_tensor, image_name, save_dir):
+    predictions = prediction_tensor
+    conv_predictions = []
+
+    num_of_pred = predictions[0]['boxes'].size(dim = 0)
+
+    for pred in range(num_of_pred):
+        label = predictions[0]['labels'][pred].tolist()
+        string = predictions[0]['scores'][pred].tolist()
+        box = predictions[0]['boxes'][pred]
+
+        if string >= THRESHOLD:
+            text = []
+            text.append(str(label))
+            text.append(str(string))
+            for point in box:
+                text.append(str(int(point)))
+            text = " ".join(text)
+            conv_predictions.append(text)
+        else:
+            pass
+
+    write_preds_to_file(conv_predictions, image_name, save_dir)

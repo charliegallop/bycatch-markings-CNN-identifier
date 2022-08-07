@@ -1,8 +1,9 @@
 images
+reports
 research
+tutorials
 analysis/data
 analysis/outputs
-analysis/test_data
-analysis/test_predictions
-reports
-tutorials
+analysis/plots
+analysis/annotations
+analysis/code/src/review_object_detection_metrics
