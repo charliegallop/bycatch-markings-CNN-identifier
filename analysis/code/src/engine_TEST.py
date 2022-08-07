@@ -1,5 +1,5 @@
 
-from config import DEVICE, NUM_CLASSES, NUM_EPOCHS, OUT_DIR, BACKBONE, THRESHOLD, CLASSES, COLOURS
+from config import DEVICE, NUM_CLASSES, NUM_EPOCHS, OUT_DIR, BACKBONE, THRESHOLD, CLASSES, COLOURS, LABELS_TO_TRAIN
 from config import VISUALIZE_TRANSFORMED_IMAGES
 from config import SAVE_PLOTS_EPOCH, SAVE_MODEL_EPOCH
 from config import VALID_PRED_DIR, VALID_DIR
@@ -23,6 +23,22 @@ import numpy as np
 
 plt.style.use('ggplot')
 
+def select_labels(selection, targets):
+    if selection == "dolphin":
+        for image in targets:
+
+            image['boxes'] = image['boxes'][image['labels'] == 2]
+            image['labels'] = image['labels'][image['labels'] == 2]
+    elif selection == "markings":
+        for image in targets:
+
+            image['boxes'] = image['boxes'][image['labels'] != 2]
+            image['labels'] = image['labels'][image['labels'] != 2]
+    elif selection == "all":
+        targets = targets
+
+    return targets
+
 # function for running training iterations
 def train(train_data_loader, model):
     print('Training')
@@ -37,6 +53,7 @@ def train(train_data_loader, model):
         optimizer.zero_grad()
 
         images, labels = data
+        labels = select_labels(LABELS_TO_TRAIN, labels)
         images = list(image.to(DEVICE) for image in images)
         labels = [{k: v.to(DEVICE) for k, v in l.items()} for l in labels]
         
@@ -70,6 +87,7 @@ def validate(valid_data_loader, model):
 
     for i, data in enumerate(prog_bar):
         images, labels = data
+        labels = select_labels(LABELS_TO_TRAIN, labels)
         images = list(image.to(DEVICE) for image in images)
         labels = [{k: v.to(DEVICE) for k, v in l.items()} for l in labels]
 
@@ -164,10 +182,6 @@ def calc_metrics(model):
     cv2.destroyAllWindows()
 
 
-
-
-
-
 if __name__ == '__main__':
 
     print('-'*50)
@@ -253,7 +267,7 @@ if __name__ == '__main__':
         
             torch.save(model.state_dict(), f"{OUT_DIR}/model{epoch+1}.pth")
         
-        if NUM_EPOCHS >= 49:
+        if (epoch+1) ==  NUM_EPOCHS:
             calc_metrics(model)
 
         

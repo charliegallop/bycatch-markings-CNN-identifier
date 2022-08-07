@@ -15,19 +15,36 @@ import time
 
 plt.style.use('ggplot')
 
-def select_only_dolphin_labels(targets):
-    for image in targets:
+# Selects the labels and bounding boxes for either the markings, dolphins or all
+def select_labels(selection, targets):
+    if selection == "dolphin":
+        for image in targets:
 
             image['boxes'] = image['boxes'][image['labels'] == 2]
             image['labels'] = image['labels'][image['labels'] == 2]
-    return targets
-
-def select_markings_labels(targets):
-    for image in targets:
+    elif selection == "markings":
+        for image in targets:
 
             image['boxes'] = image['boxes'][image['labels'] != 2]
             image['labels'] = image['labels'][image['labels'] != 2]
+    elif selection == "all":
+        targets = targets
+
     return targets
+
+# def select_only_dolphin_labels(targets):
+#     for image in targets:
+
+#             image['boxes'] = image['boxes'][image['labels'] == 2]
+#             image['labels'] = image['labels'][image['labels'] == 2]
+#     return targets
+
+# def select_markings_labels(targets):
+#     for image in targets:
+
+#             image['boxes'] = image['boxes'][image['labels'] != 2]
+#             image['labels'] = image['labels'][image['labels'] != 2]
+#     return targets
 
 
 # function for running training iterations

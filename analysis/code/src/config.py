@@ -60,6 +60,13 @@ NUM_WORKERS = 2
 
 THRESHOLD = 0.5
 
+# Select which labels to run the model on:
+# - "dolphins"
+# - "markings"
+# - "all"
+
+LABELS_TO_TRAIN = "markings"
+
 
 
 
