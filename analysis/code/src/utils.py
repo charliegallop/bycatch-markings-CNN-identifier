@@ -5,7 +5,7 @@ import torch
 import os
 
 from albumentations.pytorch import ToTensorV2
-from config import DEVICE, CLASSES as classes
+from config import DEVICE, CLASSES_MARKINGS as classes_markings, CLASSES_DOLPHIN as classes_dolphins
 from config import ROOT, BACKBONE, THRESHOLD, TEST_PREDS_DIR
 
 # this class keeps track of the training and validation loss values...
@@ -115,3 +115,28 @@ def save_predictions_as_txt(prediction_tensor, image_name, save_dir):
             pass
 
     write_preds_to_file(conv_predictions, image_name, save_dir)
+
+def get_labels(classes, member, width, height, boxes, labels, image_width, image_height):
+
+    # map the current object name to 'classes' list to get...
+    #... the label index and append to 'labels' list
+    labels.append(classes.index(member.find('name').text))
+
+    # xmin = left corner x-coordinates
+    xmin = int(member.find('bndbox').find('xmin').text)
+    # xmax = right corner x-coordinates
+    xmax = int(member.find('bndbox').find('xmax').text)
+    # ymin = left corner y-coordinates
+    ymin = int(member.find('bndbox').find('ymin').text)
+    # ymax = left corner y-coordinates
+    ymax = int(member.find('bndbox').find('ymax').text)
+
+    # resize the bounding boxes acording to the..
+    # ... desired 'width', 'height'
+    xmin_final = (xmin/image_width)*width
+    xmax_final = (xmax/image_width)*width
+    ymin_final = (ymin/image_height)*height
+    ymax_final = (ymax/image_height)*height
+
+    boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
+    return boxes, labels

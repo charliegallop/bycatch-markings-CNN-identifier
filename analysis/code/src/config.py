@@ -37,9 +37,12 @@ TEST_PREDS_DIR = os.path.join(ROOT, 'data/test_set/test_predictions', BACKBONE)
 
 # classes: 0 index is reserved for background
 
-CLASSES = ['background', 'impression', 'dolphin', 'fin_slice', 'amputation', 'notch']
+CLASSES_MARKINGS = ['background', 'impression', 'dolphin', 'fin_slice', 'amputation', 'notch']
+CLASSES_DOLPHIN = ['background', 'dolphin']
 
-NUM_CLASSES = len(CLASSES)
+
+NUM_CLASSES_MARKINGS = len(CLASSES_MARKINGS)
+NUM_CLASSES_DOLPHIN = len(CLASSES_DOLPHIN)
 
 COLOURS = {'impression': (255, 0, 0),'dolphin': (0, 0, 255), 'fin_slice':(0, 255, 0), 'amputation': (0, 255, 255), 'notch': (255, 0, 255)}
 

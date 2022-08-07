@@ -5,13 +5,14 @@ import os
 import glob as glob
 
 from xml.etree import ElementTree as et
-from config import CLASSES, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE
+from config import CLASSES_DOLPHIN, CLASSES_MARKINGS, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE
 from torch.utils.data import Dataset, DataLoader
-from utils import collate_fn, get_train_transform, get_valid_transform
+from utils import collate_fn, get_train_transform, get_valid_transform, get_labels
 
 # the dataset class
 class BycatchDataset(Dataset):
-    def __init__(self, dir_path, annot_path, width, height, classes, transforms=None):
+    def __init__(self, dir_path, annot_path, width, height, classes, selection, transforms=None):
+        self.selection = selection
         self.transforms = transforms
         self.dir_path = dir_path
         self.annot_path = annot_path
@@ -23,6 +24,8 @@ class BycatchDataset(Dataset):
         self.image_paths = glob.glob(f"{self.dir_path}/*")
         self.all_images = [image_path.split('/')[-1] for image_path in self.image_paths]
         self.all_images = sorted(self.all_images)
+
+    
 
     def __getitem__(self, idx):
         # capture the image name and the full image path
@@ -47,30 +50,24 @@ class BycatchDataset(Dataset):
         image_width = image.shape[1]
         image_height = image.shape[0]
 
+
+        # get list of all objects labelled in image
+        objects_list = [name.find('name').text for name in root.findall('object')]
+       
         # box coordinates for xml files are extracted and correct for image size given
-        for member in root.findall('object'):
-            # map the current object name to 'classes' list to get...
-            #... the label index and append to 'labels' list
-            labels.append(self.classes.index(member.find('name').text))
-
-            # xmin = left corner x-coordinates
-            xmin = int(member.find('bndbox').find('xmin').text)
-            # xmax = right corner x-coordinates
-            xmax = int(member.find('bndbox').find('xmax').text)
-            # ymin = left corner y-coordinates
-            ymin = int(member.find('bndbox').find('ymin').text)
-            # ymax = left corner y-coordinates
-            ymax = int(member.find('bndbox').find('ymax').text)
-
-            # resize the bounding boxes acording to the..
-            # ... desired 'width', 'height'
-            xmin_final = (xmin/image_width)*self.width
-            xmax_final = (xmax/image_width)*self.width
-            ymin_final = (ymin/image_height)*self.height
-            ymax_final = (ymax/image_height)*self.height
-
-            boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
-
+        if self.selection == 'dolphin':
+            for member in root.findall('object'):
+                if 'dolphin' in objects_list:
+                    if member.find('name').text == 'dolphin':
+                        boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
+                else:
+                    print("-"*50)
+                    print("DOLPHIN LABEL DOES NOT EXIST")
+                    print("-"*50)
+        elif self.selection == 'markings':
+            if member.find('name').text != 'dolphin':
+                boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
+    
         # bounding box to tensor
         boxes = torch.as_tensor(boxes, dtype = torch.float32)
         # area of the bounding boxes
@@ -101,6 +98,7 @@ class BycatchDataset(Dataset):
     def __len__(self):
         return len(self.all_images)
 
+
 # move the images from 'forAnnotations' folder to either test or train folder...
 #... based on the annotation files
 
@@ -126,25 +124,46 @@ def move_images_to_project_folder(annot_dir, images_dir, original_path):
 #move_images_to_project_folder(VALID_ANNOT_DIR, VALID_DIR, '/home/charlie/forAnnotation')
 
 
-# prepare the final datasets and data loaders
-train_dataset = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_train_transform())
-valid_dataset = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
-train_loader = DataLoader(
-    train_dataset,
+# prepare the final datasets and data loaders with only markings labels
+train_dataset_markings = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, get_train_transform(), "markings")
+valid_dataset_markings = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, get_valid_transform(), "markings")
+
+train_loader_markings = DataLoader(
+    train_dataset_markings,
     batch_size=BATCH_SIZE,
     shuffle=True,
     num_workers=2,
     collate_fn=collate_fn
 )
-valid_loader = DataLoader(
-    valid_dataset,
+valid_loader_markings = DataLoader(
+    valid_dataset_markings,
     batch_size=BATCH_SIZE,
     shuffle=False,
     num_workers=2,
     collate_fn=collate_fn
 )
-print(f"Number of training samples: {len(train_dataset)}")
-print(f"Number of validation samples: {len(valid_dataset)}\n")
+
+# prepare the final datasets and data loaders with only dolphin labels
+train_dataset_dolphin = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, get_train_transform(), "dolphin")
+valid_dataset_dolphin = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, get_valid_transform(), "dolphin")
+
+train_loader_dolphin = DataLoader(
+    train_dataset_dolphin,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    num_workers=2,
+    collate_fn=collate_fn
+)
+valid_loader_dolphin = DataLoader(
+    valid_dataset_dolphin,
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    num_workers=2,
+    collate_fn=collate_fn
+)
+
+print(f"Number of training samples: {len(train_dataset_markings)}")
+print(f"Number of validation samples: {len(valid_dataset_markings)}\n")
 
 
 # execute datasets.py using Python command from Terminal...
@@ -152,15 +171,16 @@ print(f"Number of validation samples: {len(valid_dataset)}\n")
 # USAGE: python datasets.py
 if __name__ == '__main__':
     # sanity check of the Dataset pipeline with sample visualization
+    classes = CLASSES_DOLPHIN
     dataset = BycatchDataset(
-        TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES
+        TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin"
     )
     print(f"Number of training images: {len(dataset)}")
     
     # function to visualize a single sample
     def visualize_sample(image, target):
         box = target['boxes'][0]
-        label = CLASSES[target['labels'][0]]
+        label = classes[target['labels'][0]]
         cv2.rectangle(
             image, 
             (int(box[0]), int(box[1])), (int(box[2]), int(box[3])),
