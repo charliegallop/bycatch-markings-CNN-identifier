@@ -20,7 +20,7 @@ TRAIN_DIR = os.path.join(ROOT, 'data/train_set/train')
 TRAIN_ANNOT_DIR = os.path.join(ROOT, 'data/train_set/train_annotations')
 
 # validation images and XML files directory
-VALID_DIR = os.path.join(ROOT, 'data/train_set/valid')
+VALID_DIR = os.path.join(ROOT, 'data/train_set')
 VALID_ANNOT_DIR = os.path.join(ROOT, 'data/train_set/valid_annotations')
 VALID_PRED_DIR = os.path.join(ROOT, 'data/train_set/valid_predictions')
 
@@ -52,7 +52,7 @@ VISUALIZE_TRANSFORMED_IMAGES = False
 
 
 # location to save model and plots
-OUT_DIR = os.path.join(ROOT, 'outputs', 'test')
+OUT_DIR = os.path.join(ROOT, 'outputs')
 SAVE_PLOTS_EPOCH = 2 # save loss plots after these many epochs
 SAVE_MODEL_EPOCH = 2 # save model after these many epochs
 
@@ -68,7 +68,7 @@ THRESHOLD = 0.5
 # - "markings"
 # - "all"
 
-SELECTION = "dolphin"
+TRAIN_FOR = "dolphin"
 
 
 

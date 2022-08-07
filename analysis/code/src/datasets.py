@@ -5,7 +5,7 @@ import os
 import glob as glob
 
 from xml.etree import ElementTree as et
-from config import CLASSES_DOLPHIN, CLASSES_MARKINGS, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE
+from config import CLASSES_DOLPHIN, CLASSES_MARKINGS, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE, TRAIN_FOR
 from torch.utils.data import Dataset, DataLoader
 from utils import collate_fn, get_train_transform, get_valid_transform, get_labels
 
@@ -134,47 +134,49 @@ def move_images_to_project_folder(annot_dir, images_dir, original_path):
 #move_images_to_project_folder(VALID_ANNOT_DIR, VALID_DIR, '/home/charlie/forAnnotation')
 
 
-# prepare the final datasets and data loaders with only markings labels
-train_dataset_markings = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, "markings", get_train_transform())
-valid_dataset_markings = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, "markings", get_valid_transform())
+# TODO: Make the creation of the datasets a function so custom BATCH_SIZE and RESIZE_TO values can be added from the main script
 
-train_loader_markings = DataLoader(
-    train_dataset_markings,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    num_workers=2,
-    collate_fn=collate_fn
-)
-valid_loader_markings = DataLoader(
-    valid_dataset_markings,
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    num_workers=2,
-    collate_fn=collate_fn
-)
+def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BATCH_SIZE, transforms = [get_train_transform(), get_valid_transform()], resize_to = RESIZE_TO):
+    train_dataset = BycatchDataset(train_dirs[0], train_dirs[1], resize_to, resize_to, classes, train_for, transforms[0])
+    valid_dataset = BycatchDataset(valid_dirs[0], valid_dirs[1], resize_to, resize_to, classes, train_for, transforms[1])
 
-# prepare the final datasets and data loaders with only dolphin labels
-train_dataset_dolphin = BycatchDataset(TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin", get_train_transform())
-valid_dataset_dolphin = BycatchDataset(VALID_DIR, VALID_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin", get_valid_transform())
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=2,
+        collate_fn=collate_fn
+    )
+    valid_loader = DataLoader(
+        valid_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        collate_fn=collate_fn
+    )
+    return train_loader, valid_loader, train_dataset, valid_dataset
 
-train_loader_dolphin = DataLoader(
-    train_dataset_dolphin,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    num_workers=2,
-    collate_fn=collate_fn
-)
-valid_loader_dolphin = DataLoader(
-    valid_dataset_dolphin,
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    num_workers=2,
-    collate_fn=collate_fn
-)
+VALID_IMAGES_DIR = os.path.join(VALID_DIR, 'valid')
+# path to dolphin images and annotations 
+MARKINGS_VALID_ANNOT_DIR = os.path.join(VALID_DIR, 'valid_predictions/ground_truth_annotations/markings')
+# path to dolphin images and annotations 
+DOLPHIN_VALID_ANNOT_DIR = os.path.join(VALID_DIR, 'valid_predictions/ground_truth_annotations/dolphin')
 
-print(f"Number of training samples: {len(train_dataset_markings)}")
-print(f"Number of validation samples: {len(valid_dataset_markings)}\n")
+dolphin_training_dirs = [TRAIN_DIR, TRAIN_ANNOT_DIR]
+dolphin_valid_dirs = [VALID_IMAGES_DIR, DOLPHIN_VALID_ANNOT_DIR]
 
+markings_training_dirs = [TRAIN_DIR, TRAIN_ANNOT_DIR]
+markings_valid_dirs = [VALID_IMAGES_DIR, MARKINGS_VALID_ANNOT_DIR]
+
+train_loader_markings, valid_loader_markings, train_dataset_markings, valid_dataset_markings  = make_dataloader(dolphin_training_dirs, dolphin_valid_dirs, CLASSES_MARKINGS, "markings")
+train_loader_dolphin, valid_loader_dolphin, train_dataset_dolphin, valid_dataset_dolphin = make_dataloader(dolphin_training_dirs, dolphin_valid_dirs, CLASSES_DOLPHIN, "dolphin")
+
+if TRAIN_FOR == 'dolphin':
+    print(f"Number of training samples: {len(train_dataset_dolphin)}")
+    print(f"Number of validation samples: {len(valid_dataset_dolphin)}\n")
+elif TRAIN_FOR == 'markings':
+    print(f"Number of training samples: {len(train_dataset_markings)}")
+    print(f"Number of validation samples: {len(valid_dataset_markings)}\n")
 
 # execute datasets.py using Python command from Terminal...
 # ... to visualize sample images
@@ -211,7 +213,7 @@ if __name__ == '__main__':
         cv2.imshow('Image', image)
         cv2.waitKey(0)
         
-    NUM_SAMPLES_TO_VISUALIZE = 1000
+    NUM_SAMPLES_TO_VISUALIZE = 3
     for i in range(NUM_SAMPLES_TO_VISUALIZE):
         image, target = dataset[i]
         visualize_sample(image, target)
