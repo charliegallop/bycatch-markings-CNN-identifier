@@ -26,7 +26,8 @@ plt.style.use('ggplot')
 
 class engine():
 
-    def __init__(self, BACKBONE, TRAIN_FOR):
+    def __init__(self, BACKBONE, TRAIN_FOR, EPOCHS):
+        
         if TRAIN_FOR == 'dolphin':
             print("DOLPHIN DATALOADER SELECTED")
             self.train_loader = train_loader_dolphin
@@ -42,7 +43,8 @@ class engine():
             print("NOT A VALID SELECTION")
 
         
-        
+        self.num_epochs = EPOCHS
+        print(self.num_epochs)
         self.train_for = TRAIN_FOR
         # initialize the model and move to the computation device
         self.backbone = BACKBONE
@@ -244,8 +246,8 @@ class engine():
             show_transformed_image(self.train_loader)
         
         # start the training epochs:
-        for epoch in range(NUM_EPOCHS):
-            print(f"\nEPOCH {epoch+1} of {NUM_EPOCHS}")
+        for epoch in range(self.num_epochs):
+            print(f"\nEPOCH {epoch+1} of {self.num_epochs}")
 
             #reset the training and validation loss histories for the current epoch
             self.train_loss_epoch.reset()
@@ -280,7 +282,7 @@ class engine():
                 figure_2.savefig(f"{self.output_dir}/valid_loss_{epoch+1}.png")
                 print('SAVING PLOTS COMPLETE...')
             
-            if (epoch+1) == NUM_EPOCHS: # save loss plots and model once at the end
+            if (epoch+1) == self.num_epochs: # save loss plots and model once at the end
                 train_ax.plot(train_loss, color = 'blue')
                 train_ax.set_xlabel('iterations')
                 train_ax.set_ylabel('train loss')
@@ -292,7 +294,7 @@ class engine():
             
                 torch.save(self.model.state_dict(), f"{self.output_dir}/model{epoch+1}.pth")
             
-            if (epoch+1) ==  NUM_EPOCHS:
+            if (epoch+1) ==  self.num_epochs:
                 self.calc_metrics(self.model)
 
             

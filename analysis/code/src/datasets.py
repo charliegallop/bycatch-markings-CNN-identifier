@@ -74,10 +74,24 @@ class BycatchDataset(Dataset):
                     boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
                     labels.append(0)
                     print(image_name)
+
         elif self.selection == 'markings':
-            if member.find('name').text != 'dolphin':
-                boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
-    
+            for member in root.findall('object'):
+                if member.find('name').text == 'dolphin':
+                    root.remove(member)
+                else:
+                    boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
+            if not boxes:
+                background_bb = {
+                                'xmin_final': 0.0,
+                                'xmax_final': self.width,
+                                'ymin_final': 0.0,
+                                'ymax_final': self.height
+                            }
+                # create 'dolphin' bounding box assuming it covers the whole image
+                boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
+                labels.append(0)
+
         # bounding box to tensor
         boxes = torch.as_tensor(boxes, dtype = torch.float32)
         # area of the bounding boxes
@@ -168,7 +182,7 @@ dolphin_valid_dirs = [VALID_IMAGES_DIR, DOLPHIN_VALID_ANNOT_DIR]
 markings_training_dirs = [TRAIN_DIR, TRAIN_ANNOT_DIR]
 markings_valid_dirs = [VALID_IMAGES_DIR, MARKINGS_VALID_ANNOT_DIR]
 
-train_loader_markings, valid_loader_markings, train_dataset_markings, valid_dataset_markings  = make_dataloader(dolphin_training_dirs, dolphin_valid_dirs, CLASSES_MARKINGS, "markings")
+train_loader_markings, valid_loader_markings, train_dataset_markings, valid_dataset_markings  = make_dataloader(markings_training_dirs, markings_valid_dirs, CLASSES_MARKINGS, "markings")
 train_loader_dolphin, valid_loader_dolphin, train_dataset_dolphin, valid_dataset_dolphin = make_dataloader(dolphin_training_dirs, dolphin_valid_dirs, CLASSES_DOLPHIN, "dolphin")
 
 if TRAIN_FOR == 'dolphin':

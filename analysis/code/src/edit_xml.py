@@ -5,7 +5,7 @@ ANNOT_DIR = "/home/charlie/Documents/Uni/Exeter - Data Science/Dissertation/anal
 WRITE_TO = "/home/charlie/Documents/Uni/Exeter - Data Science/Dissertation/analysis/data/train_set/valid_predictions/ground_truth_annotations" 
 ANNOTATIONS = glob.glob(f"{ANNOT_DIR}/*")
 
-def remove_labels(label_to_keep = 'dolphin'):
+def keep_labels(label_to_keep = 'dolphin'):
 
     if label_to_keep == 'dolphin':
         for i in ANNOTATIONS:
@@ -30,5 +30,8 @@ def remove_labels(label_to_keep = 'dolphin'):
                     root.remove(member)
 
             tree.write(f'{WRITE_TO}/{label_to_keep}/{image_name}')
+    else:
+        print("NOT A VALID LABEL")
 
-remove_labels('markings')
+keep_labels('markings')
+keep_labels('dolphin')

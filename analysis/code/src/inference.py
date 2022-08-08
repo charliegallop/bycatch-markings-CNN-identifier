@@ -5,10 +5,10 @@ import glob as glob
 import os
 
 from model import create_model
-from config import ROOT, NUM_EPOCHS, COLOURS, CLASSES, BACKBONE, TEST_ANNOT_DIR, TEST_DIR, TEST_IMG_PREDS_DIR, TEST_PREDS_DIR
+from config import ROOT, NUM_EPOCHS, COLOURS, CLASSES_MARKINGS, CLASSES_DOLPHIN, BACKBONE, TEST_ANNOT_DIR, TEST_DIR, TEST_IMG_PREDS_DIR, TEST_PREDS_DIR, THRESHOLD
 from utils import save_predictions_as_txt
 
-NUM_CLASSES = len(CLASSES)
+NUM_CLASSES = len(CLASSES_MARKINGS)
 
 # define the detection threshold...
 #... any detection having score below this will be discarded
@@ -20,7 +20,7 @@ print('-'*50)
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # load model and trained weights
 model = create_model(num_classes=NUM_CLASSES, backbone = BACKBONE).to(device)
-model_path = os.path.join(ROOT, 'outputs', BACKBONE, f'model{NUM_EPOCHS}.pth')
+model_path = os.path.join(ROOT, 'outputs', BACKBONE, 'markings', f'model{NUM_EPOCHS}.pth')
 model.load_state_dict(torch.load(
     model_path, map_location = device
 ))
@@ -28,7 +28,7 @@ model.load_state_dict(torch.load(
 model.eval()
 
 # directory where all the images are present
-DIR_TEST = os.path.join(ROOT, 'test_data')
+DIR_TEST = os.path.join(ROOT, 'data/test_set/test_data')
 test_images = glob.glob(f"{DIR_TEST}/*")
 print(f"Test instances: {len(test_images)}")
 
@@ -60,14 +60,14 @@ for i in range(len(test_images)):
         scores = outputs[0]['scores'].data.numpy()
         # print(outputs, test_images[i])
 
-        # save predictions in a text file so can be used to get metrics
-        save_predictions_as_txt(outputs, image_name)
+        # # save predictions in a text file so can be used to get metrics
+        # save_predictions_as_txt(outputs, image_name)
 
         # filter out boxes according to the detection threshold
         boxes = boxes[scores >= THRESHOLD].astype(np.int32)
         draw_boxes = boxes.copy()
         # get all the predicted class names
-        pred_classes = [CLASSES[i] for i in outputs[0]['labels'].cpu().numpy()]
+        pred_classes = [CLASSES_MARKINGS[i] for i in outputs[0]['labels'].cpu().numpy()]
 
         # draw the bounding boxes and write class name on top of it
         for j, box in enumerate(draw_boxes):
@@ -82,7 +82,7 @@ for i in range(len(test_images)):
             
             # cv2.imshow('Prediction', orig_image)
             # cv2.waitKey(1)
-            write_to_dir = os.path.join(TEST_IMG_PREDS_DIR, f'{image_name}.jpg')
+            write_to_dir = os.path.join(ROOT, 'data/test_set/test_prediction_images/resnet/markings', f'{image_name}.jpg')
             cv2.imwrite(write_to_dir, orig_image)
         print(f"Image {i+1} done...")
         print('-'*50)

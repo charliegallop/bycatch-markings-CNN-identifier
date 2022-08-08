@@ -1,17 +1,29 @@
 import torch
 import os
 
-ROOT = '/home/charlie/Documents/Uni/Exeter - Data Science/Dissertation/analysis'
+# Select which labels to run the model on:
+# - "dolphins"
+# - "markings"
+# - "all"
 
-BATCH_SIZE = 4 # increase / decrease according to GPU memory
-RESIZE_TO = 512
-NUM_EPOCHS = 50 
+TRAIN_FOR = "dolphin"
+
+# detection threshold, any predictions with confidence lower than this will
+# be disregarded
+
+THRESHOLD = 0.5
+
+BATCH_SIZE = 3 # increase / decrease according to GPU memory
+RESIZE_TO = 256
+NUM_EPOCHS = 4
 
 # choose which backbone to load for the faster r-cnn model
 # Choices:
 #   - 'mobilenet'
 #   - 'resnet'
 BACKBONE = 'mobilenet'
+
+ROOT = '/home/charlie/Documents/Uni/Exeter - Data Science/Dissertation/analysis'
 
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -58,17 +70,6 @@ SAVE_MODEL_EPOCH = 2 # save model after these many epochs
 
 NUM_WORKERS = 2
 
-# detection threshold, any predictions with confidence lower than this will
-# be disregarded
-
-THRESHOLD = 0.5
-
-# Select which labels to run the model on:
-# - "dolphins"
-# - "markings"
-# - "all"
-
-TRAIN_FOR = "dolphin"
 
 
 
