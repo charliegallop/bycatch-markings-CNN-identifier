@@ -16,6 +16,7 @@ train_fors = [
 BACKBONE = backbones[0]
 TRAIN_FOR = train_fors[0]
 NUM_EPOCHS = 50
+MODEL_PATH = None
 
 # Create object
 root = tk.Tk()
@@ -71,13 +72,44 @@ label.pack()
 epochs_num = tk.Entry(root)
 epochs_num.pack()
 
+def check_model_entry():
+    if len(model_path.get()) == 0:
+        path = None
+    else:
+        path = model_path.get()
+    return path
+
+
+# Create Label
+label = tk.Label( root , text = "(Optional) Enter the path to a model state to train from: " )
+label.pack()
+
+model_path = tk.Entry(root)
+model_path.pack()
+
 def train_model():
-    global NUM_EPOCHS, TRAIN_FOR, BACKBONE, engine
+    global NUM_EPOCHS, TRAIN_FOR, BACKBONE, MODEL_PATH, engine
     NUM_EPOCHS = epochs_num.get()
-    model_engine = engine(BACKBONE, TRAIN_FOR, int(NUM_EPOCHS))
+    MODEL_PATH = check_model_entry()
+    model_engine = engine(BACKBONE, TRAIN_FOR, int(NUM_EPOCHS), MODEL_PATH)
     model_engine.run()
 
+def infer_model():
+    from inference import Inference_engine
+    global NUM_EPOCHS, TRAIN_FOR, BACKBONE, MODEL_PATH, engine
+    MODEL_PATH = check_model_entry()
+    infer_engine = Inference_engine(BACKBONE, TRAIN_FOR, MODEL_PATH)
+    infer_engine.infer()
+
+
 button = tk.Button(root, text= "Run Model", command = train_model)
+button.pack()
+
+#Label
+labelTest = tk.Label(text="", font=('Helvetica', 12), fg='red')
+labelTest.pack(side="top")
+
+button = tk.Button(root, text= "Infer Model", command = infer_model)
 button.pack()
 
 #Label

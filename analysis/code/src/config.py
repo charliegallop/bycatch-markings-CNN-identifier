@@ -14,8 +14,8 @@ TRAIN_FOR = "dolphin"
 THRESHOLD = 0.5
 
 BATCH_SIZE = 3 # increase / decrease according to GPU memory
-RESIZE_TO = 256
-NUM_EPOCHS = 4
+RESIZE_TO = 2048
+NUM_EPOCHS = 100
 
 # choose which backbone to load for the faster r-cnn model
 # Choices:
@@ -66,7 +66,7 @@ VISUALIZE_TRANSFORMED_IMAGES = False
 # location to save model and plots
 OUT_DIR = os.path.join(ROOT, 'outputs')
 SAVE_PLOTS_EPOCH = 2 # save loss plots after these many epochs
-SAVE_MODEL_EPOCH = 2 # save model after these many epochs
+SAVE_MODEL_EPOCH = 10 # save model after these many epochs
 
 NUM_WORKERS = 2
 
