@@ -3,8 +3,12 @@ reports
 research
 tutorials
 rawData
+tutorials
+Yolo_test
 analysis/data
 analysis/outputs
 analysis/plots
-analysis/annotations
+analysis/master
+analysis/env
 analysis/code/src/review_object_detection_metrics
+analysis/project.zip

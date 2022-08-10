@@ -1,5 +1,6 @@
 import tkinter as tk
 from engine import engine
+from config import BACKBONE, TRAIN_FOR, NUM_EPOCHS
 
 # Backbone options
 backbones = [
@@ -13,9 +14,7 @@ train_fors = [
     "markings"
 ]
 
-BACKBONE = backbones[0]
-TRAIN_FOR = train_fors[0]
-NUM_EPOCHS = 50
+
 MODEL_PATH = None
 
 # Create object
@@ -30,10 +29,6 @@ clicked_bb = tk.StringVar(root, value = backbones[0])
 clicked_tf = tk.StringVar(root, value = train_fors[0])
 epochs = tk.IntVar(root, value = 50)
 
-
-
-
-
 # Create Label
 label = tk.Label( root , text = "Select BACKBONE:" )
 label.pack()
@@ -44,8 +39,8 @@ drop.pack()
 
 def callback_bb(*args):
     global BACKBONE
-    BACKBONE = clicked_bb.get()
-    labelTest.configure(text=f"The chosen options will train a {BACKBONE} model on the {TRAIN_FOR} dataset!")
+    BACKBONE.change(clicked_bb.get())
+    labelTest.configure(text=f"The chosen options will train a {BACKBONE.value()} model on the {TRAIN_FOR.value()} dataset!")
 
 clicked_bb.trace("w", callback_bb)
 
@@ -60,8 +55,8 @@ drop.pack()
 
 def callback_tf(*args):
     global TRAIN_FOR
-    TRAIN_FOR = clicked_tf.get()
-    labelTest.configure(text=f"The chosen options will train a {BACKBONE} model on the {TRAIN_FOR} dataset!")
+    TRAIN_FOR.change(clicked_tf.get())
+    labelTest.configure(text=f"The chosen options will train a {BACKBONE.value()} model on the {TRAIN_FOR.value()} dataset!")
 
 clicked_tf.trace("w", callback_tf)
 
@@ -89,16 +84,16 @@ model_path.pack()
 
 def train_model():
     global NUM_EPOCHS, TRAIN_FOR, BACKBONE, MODEL_PATH, engine
-    NUM_EPOCHS = epochs_num.get()
+    NUM_EPOCHS.change(int(epochs_num.get()))
     MODEL_PATH = check_model_entry()
-    model_engine = engine(BACKBONE, TRAIN_FOR, int(NUM_EPOCHS), MODEL_PATH)
+    model_engine = engine(BACKBONE.value(), TRAIN_FOR.value(), int(NUM_EPOCHS.value()), MODEL_PATH)
     model_engine.run()
 
 def infer_model():
     from inference import Inference_engine
     global NUM_EPOCHS, TRAIN_FOR, BACKBONE, MODEL_PATH, engine
     MODEL_PATH = check_model_entry()
-    infer_engine = Inference_engine(BACKBONE, TRAIN_FOR, MODEL_PATH)
+    infer_engine = Inference_engine(BACKBONE.value(), TRAIN_FOR.value(), MODEL_PATH)
     infer_engine.infer()
 
 

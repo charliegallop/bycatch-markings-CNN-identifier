@@ -6,7 +6,7 @@ import os
 
 from albumentations.pytorch import ToTensorV2
 from config import DEVICE
-from config import ROOT, BACKBONE, THRESHOLD, TEST_PREDS_DIR
+from config import ROOT, BACKBONE, THRESHOLD
 
 # this class keeps track of the training and validation loss values...
 #... and helps tp get the average for each epoch

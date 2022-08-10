@@ -5,7 +5,7 @@ import glob as glob
 import os
 
 from model import create_model
-from config import ROOT, NUM_EPOCHS, COLOURS, BACKBONE, THRESHOLD, VALID_DIR, TRAIN_FOR
+from config import ROOT, NUM_EPOCHS, COLOURS, BACKBONE, THRESHOLD, TEST_DIR, TRAIN_FOR
 from utils import save_predictions_as_txt
 
 class Inference_engine():
@@ -26,8 +26,8 @@ class Inference_engine():
 
         elif TRAIN_FOR == 'markings':
             from config import CLASSES_MARKINGS, NUM_CLASSES_MARKINGS
-            num_classes = NUM_CLASSES_MARKINGS
-            classes = CLASSES_MARKINGS
+            self.num_classes = NUM_CLASSES_MARKINGS
+            self.classes = CLASSES_MARKINGS
 
             print('-'*50)
             print("INFERING FOR MARKINGS")
@@ -54,7 +54,7 @@ class Inference_engine():
         self.model.eval()
 
         # directory where all the images are present
-        DIR_TEST = os.path.join(VALID_DIR, 'valid')
+        DIR_TEST = os.path.join(TEST_DIR, 'images')
         test_images = glob.glob(f"{DIR_TEST}/*")
         print(f"Test instances: {len(test_images)}")
 
@@ -85,7 +85,7 @@ class Inference_engine():
                 boxes = outputs[0]['boxes'].data.numpy()
                 scores = outputs[0]['scores'].data.numpy()
 
-                save_predictions_as_txt(outputs, image_name, f"{ROOT}/data/infered_images/{TRAIN_FOR}")
+                save_predictions_as_txt(outputs, image_name, f"{ROOT}/data/infered_images/{TRAIN_FOR.value()}")
 
                 # filter out boxes according to the detection threshold
                 boxes = boxes[scores >= self.detection_threshold].astype(np.int32)
@@ -107,7 +107,7 @@ class Inference_engine():
                     
                     # cv2.imshow('Prediction', orig_image)
                     # cv2.waitKey(1)
-                    write_to_dir = os.path.join(ROOT,'data', 'infered_images', TRAIN_FOR, f'{image_name}.jpg')
+                    write_to_dir = os.path.join(ROOT,'data', 'infered_images', TRAIN_FOR.value(), f'{image_name}.jpg')
                     cv2.imwrite(write_to_dir, orig_image)
                     if saved == False:
                         self.saved_images += 1

@@ -3,9 +3,10 @@ import cv2
 import numpy as np
 import os
 import glob as glob
+from PIL import Image
 
 from xml.etree import ElementTree as et
-from config import CLASSES_DOLPHIN, CLASSES_MARKINGS, RESIZE_TO, TRAIN_DIR, TRAIN_ANNOT_DIR, VALID_DIR, VALID_ANNOT_DIR, BATCH_SIZE, TRAIN_FOR
+from config import CLASSES_DOLPHIN, CLASSES_MARKINGS, RESIZE_TO, TRAIN_DIR, VAL_DIR, BATCH_SIZE, TRAIN_FOR, NUM_WORKERS
 from torch.utils.data import Dataset, DataLoader
 from utils import collate_fn, get_train_transform, get_valid_transform, get_labels
 
@@ -151,6 +152,11 @@ def move_images_to_project_folder(annot_dir, images_dir, original_path):
 # TODO: Make the creation of the datasets a function so custom BATCH_SIZE and RESIZE_TO values can be added from the main script
 
 def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BATCH_SIZE, transforms = [get_train_transform(), get_valid_transform()], resize_to = RESIZE_TO):
+    print('_'*50)
+    print(f"Creating dataloaders for {TRAIN_FOR.value()} dataset")
+    print('_'*50)
+
+
     train_dataset = BycatchDataset(train_dirs[0], train_dirs[1], resize_to, resize_to, classes, train_for, transforms[0])
     valid_dataset = BycatchDataset(valid_dirs[0], valid_dirs[1], resize_to, resize_to, classes, train_for, transforms[1])
 
@@ -158,76 +164,79 @@ def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BAT
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=NUM_WORKERS,
         collate_fn=collate_fn
     )
     valid_loader = DataLoader(
         valid_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=NUM_WORKERS,
         collate_fn=collate_fn
     )
     return train_loader, valid_loader, train_dataset, valid_dataset
 
-VALID_IMAGES_DIR = os.path.join(VALID_DIR, 'valid')
-# path to dolphin images and annotations 
-MARKINGS_VALID_ANNOT_DIR = os.path.join(VALID_DIR, 'valid_predictions/ground_truth_annotations/markings')
-# path to dolphin images and annotations 
-DOLPHIN_VALID_ANNOT_DIR = os.path.join(VALID_DIR, 'valid_predictions/ground_truth_annotations/dolphin')
+training_dirs = [f"{TRAIN_DIR}/images", f"{TRAIN_DIR}/labels"]
+valid_dirs = [f"{VAL_DIR}/images", f"{VAL_DIR}/labels"]
 
-dolphin_training_dirs = [TRAIN_DIR, TRAIN_ANNOT_DIR]
-dolphin_valid_dirs = [VALID_IMAGES_DIR, DOLPHIN_VALID_ANNOT_DIR]
 
-markings_training_dirs = [TRAIN_DIR, TRAIN_ANNOT_DIR]
-markings_valid_dirs = [VALID_IMAGES_DIR, MARKINGS_VALID_ANNOT_DIR]
+if TRAIN_FOR.value() == 'dolphin':
+    train_loader, valid_loader, train_dataset, valid_dataset = make_dataloader(training_dirs, valid_dirs, CLASSES_DOLPHIN, "dolphin")
+elif TRAIN_FOR.value() == 'markings':
+    train_loader, valid_loader, train_dataset, valid_dataset = make_dataloader(training_dirs, valid_dirs, CLASSES_MARKINGS, "markings")
 
-train_loader_markings, valid_loader_markings, train_dataset_markings, valid_dataset_markings  = make_dataloader(markings_training_dirs, markings_valid_dirs, CLASSES_MARKINGS, "markings")
-train_loader_dolphin, valid_loader_dolphin, train_dataset_dolphin, valid_dataset_dolphin = make_dataloader(dolphin_training_dirs, dolphin_valid_dirs, CLASSES_DOLPHIN, "dolphin")
-
-if TRAIN_FOR == 'dolphin':
-    print(f"Number of training samples: {len(train_dataset_dolphin)}")
-    print(f"Number of validation samples: {len(valid_dataset_dolphin)}\n")
-elif TRAIN_FOR == 'markings':
-    print(f"Number of training samples: {len(train_dataset_markings)}")
-    print(f"Number of validation samples: {len(valid_dataset_markings)}\n")
+print(f"Number of training samples: {len(train_dataset)}")
+print(f"Number of validation samples: {len(valid_dataset)}\n")
 
 # execute datasets.py using Python command from Terminal...
 # ... to visualize sample images
 # USAGE: python datasets.py
-if __name__ == '__main__':
-    # sanity check of the Dataset pipeline with sample visualization
-    classes = CLASSES_DOLPHIN
-    dataset = BycatchDataset(
-        TRAIN_DIR, TRAIN_ANNOT_DIR, RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin"
-    )
-    print(f"Number of training images: {len(dataset)}")
+# if __name__ == '__main__':
+#     # sanity check of the Dataset pipeline with sample visualization
+#     if TRAIN_FOR == 'dolphin':
+#         classes = CLASSES_DOLPHIN
+#         # dataset = BycatchDataset(
+#         #     training_dirs[0], training_dirs[1], RESIZE_TO, RESIZE_TO, CLASSES_DOLPHIN, "dolphin"
+#         # )
+#     if TRAIN_FOR == 'markings':
+#         classes = CLASSES_MARKINGS
+#     #     dataset = BycatchDataset(
+#     #         training_dirs[0], training_dirs[1], RESIZE_TO, RESIZE_TO, CLASSES_MARKINGS, "markings"
+#     #     )
+#     #     print(dataset)
+#     # print(f"Number of training images: {len(dataset)}")
     
-    dataset_loader = DataLoader(
-        dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        num_workers=2,
-        collate_fn=collate_fn
-    )
+#     # dataset_loader = DataLoader(
+#     #     dataset,
+#     #     batch_size=BATCH_SIZE,
+#     #     shuffle=False,
+#     #     num_workers=NUM_WORKERS,
+#     #     collate_fn=collate_fn
+#     # )
 
-    # function to visualize a single sample
-    def visualize_sample(image, target):
-        box = target['boxes'][0]
-        label = classes[target['labels'][0]]
-        cv2.rectangle(
-            image, 
-            (int(box[0]), int(box[1])), (int(box[2]), int(box[3])),
-            (0, 255, 0), 1
-        )
-        cv2.putText(
-            image, label, (int(box[0]), int(box[1]-5)), 
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
-        )
-        cv2.imshow('Image', image)
-        cv2.waitKey(0)
+#     # dataset_loader, _, dataset, _ = make_dataloader(training_dirs, valid_dirs, classes, TRAIN_FOR)
+#     # print(dataset)
+
+
+#     # function to visualize a single sample
+#     def visualize_sample(image, target):
+#         box = target['boxes'][0]
+#         label = classes[target['labels'][0]]
+#         cv2.rectangle(
+#             image, 
+#             (int(box[0]), int(box[1])), (int(box[2]), int(box[3])),
+#             (0, 255, 0), 1
+#         )
+#         cv2.putText(
+#             image, label, (int(box[0]), int(box[1]-5)), 
+#             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+#         )
+#         cv2.imshow('Image', image)
+#         cv2.waitKey(0)
         
-    NUM_SAMPLES_TO_VISUALIZE = 3
-    for i in range(NUM_SAMPLES_TO_VISUALIZE):
-        image, target = dataset[i]
-        visualize_sample(image, target)
+#     NUM_SAMPLES_TO_VISUALIZE = 3
+#     for i in range(NUM_SAMPLES_TO_VISUALIZE):
+#         image, target = train_dataset[i]
+#         image = train_dataset[0][0].numpy()*255
+#         print(image.T.shape)
+#         visualize_sample(image.T, target)
