@@ -1,5 +1,5 @@
 from config import DEVICE, NUM_CLASSES_DOLPHIN, NUM_CLASSES_MARKINGS, NUM_EPOCHS, OUT_DIR, NUM_WORKERS
-from config import THRESHOLD, CLASSES_DOLPHIN,CLASSES_MARKINGS, COLOURS
+from config import THRESHOLD, CLASSES_DOLPHIN,CLASSES_MARKINGS, COLOURS, BATCH_SIZE, RESIZE_TO
 from config import VISUALIZE_TRANSFORMED_IMAGES, BACKBONE
 from config import SAVE_PLOTS_EPOCH, SAVE_MODEL_EPOCH
 from config import VAL_DIR, ROOT
@@ -9,6 +9,7 @@ from tqdm.auto import tqdm
 from torch_utils.engine import (
     train_one_epoch, evaluate
 )
+from inference import Inference_engine
 
 from custom_eval import validate
 from custom_eval import calc_metrics
@@ -77,6 +78,7 @@ class engine():
         self.val_loss_box_reg_all = []
         self.val_loss_objectness_all = []
         self.val_loss_rpn_box_reg_all = []
+        self.map_stats = []
 
         if MODEL_PATH:
             self.model_path = MODEL_PATH
@@ -131,6 +133,39 @@ class engine():
         self.train_itr = 1
         self.val_itr = 1
 
+        headers = [
+            "AP_0.5-0.95", 
+            "AP_0.5", 
+            "AP_0.75",
+            "AP_0.5-0.95_small", 
+            "AP_0.5-0.95_medium", 
+            "AP_0.5-0.95_large", 
+            "AR_0.5-0.95_1Dets", 
+            "AR_0.5-0.95_10Dets", 
+            "AR_0.5-0.95_100Dets",
+            "AR_0.5-0.95_small",
+            "AR_0.5-0.95_medium", 
+            "AR_0.5-0.95_large"
+            ]
+
+    def save_map_stats(self, stats):
+        headers = [
+            "AP_0.5-0.95", 
+            "AP_0.5", 
+            "AP_0.75",
+            "AP_0.5-0.95_small", 
+            "AP_0.5-0.95_medium", 
+            "AP_0.5-0.95_large", 
+            "AR_0.5-0.95_1Dets", 
+            "AR_0.5-0.95_10Dets", 
+            "AR_0.5-0.95_100Dets",
+            "AR_0.5-0.95_small",
+            "AR_0.5-0.95_medium", 
+            "AR_0.5-0.95_large"
+            ]
+        df = pd.DataFrame(stats, columns=headers)
+        df.to_csv(f"{self.output_dir}/map_stats.csv")
+
     def run(self):
 
         prompt = input("Do you want to resplit the dataset? [y][n]")
@@ -153,10 +188,8 @@ class engine():
 
         print('-'*50)
         print(f"Training with '{self.backbone}' backbone to detect '{self.train_for}'")
+        print(f"Batch Size: '{BATCH_SIZE}'..........Resize To: '{RESIZE_TO}'")
         print('-'*50)
-
-        # define loss equation
-        criterion = torch.nn.CrossEntropyLoss()
 
         # name to save the trained model with
         MODEL_NAME = 'model'
@@ -194,8 +227,8 @@ class engine():
                 self.train_loss_objectness_all.append(loss_objectness)
                 self.train_loss_rpn_box_reg_all.append(loss_rpn_box_reg)
 
-                evaluate(self.model, self.valid_loader, DEVICE)
-
+                coco_eval = evaluate(self.model, self.valid_loader, DEVICE)
+                self.map_stats.append(coco_eval[0].save_stats())
                 val_losses = validate(self.valid_loader, self.model)
                 val_loss = val_losses['loss']
                 val_loss_classifier = val_losses['loss_classifier']
@@ -252,8 +285,8 @@ class engine():
                     losses_df['val_loss_objectness'] = self.val_loss_objectness_all
                     losses_df['val_loss_rpn_box_reg'] = self.val_loss_rpn_box_reg_all
 
-
                     losses_df.to_csv(f"{self.output_dir}/losses_df.csv")
+                    self.save_map_stats(self.map_stats)
                     print('SAVING LOSSES AS CSV COMPLETE...')
                     print("_"*50)
 
@@ -282,7 +315,6 @@ class engine():
                     valid_ax.set_xlabel('Epochs')
                     valid_ax.set_ylabel('validation loss')
 
-                    print(losses_df['train_loss'])
                     figure_1.savefig(f"{self.output_dir}/train_loss_{self.num_epochs}.png")
                     figure_2.savefig(f"{self.output_dir}/valid_loss_{self.num_epochs}.png")
                     print('SAVING FINAL PLOTS COMPLETE...')
@@ -290,13 +322,18 @@ class engine():
 
 
                     losses_df.to_csv(f"{self.output_dir}/losses_df.csv")
+                    self.save_map_stats(self.map_stats)
+
                     print('SAVING LOSSES AS CSV COMPLETE...')
                     print("_"*50)
+                    torch.save(self.model.state_dict(), f"{self.output_dir}/model{epoch+1}.pth")
+
 
                 plt.close('all')
-                    
-
-        calc_metrics(self.model, self.classes)
+        from config import TRAIN_FOR
+        infer_engine = Inference_engine(BACKBONE.value(), TRAIN_FOR.value(), f"{self.output_dir}/model{epoch+1}.pth")
+        infer_engine.infer()
+        #calc_metrics(self.model, self.classes)
 
         print("_"*50)
         print(f"RUN COMPLETED. Outputs saved to: '{self.output_dir}'")

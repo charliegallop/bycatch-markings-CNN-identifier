@@ -16,14 +16,13 @@ class BycatchDataset(Dataset):
         self.selection = selection
         self.transforms = transforms
         self.dir_path = dir_path
+        self.annot_path = annot_path
         self.height = height
         self.width = width
         self.classes = classes
 
-        self.annot_dir = os.path.join(self.dir_path, "labels")
         # get all the image paths in sorted order
-        self.image_dir = os.path.join(self.dir_path, "images")
-        self.image_paths = glob.glob(f"{self.image_dir}/*")
+        self.image_paths = glob.glob(f"{self.dir_path}/*")
         self.all_images = [image_path.split('/')[-1] for image_path in self.image_paths]
         self.all_images = sorted(self.all_images)
 
@@ -31,16 +30,16 @@ class BycatchDataset(Dataset):
     def __getitem__(self, idx):
         # capture the image name and the full image path
         image_name = self.all_images[idx]
-        image_path = os.path.join(self.image_dir, image_name)
+        image_path = os.path.join(self.dir_path, image_name)
+
         # read the image
         image = cv2.imread(image_path).astype(np.float32)
         image_resized = cv2.resize(image, (self.width, self.height))
         image_resized /= 255.0
 
         # capture the corresponding XML file for getting the annotations
-        filename = os.path.basename(image_name)
-        annot_filename = filename[:-4] + '.xml'
-        annot_file_path = os.path.join(self.annot_dir, annot_filename)
+        annot_filename = image_name[:-4] + '.xml'
+        annot_file_path = os.path.join(self.annot_path, annot_filename)
 
         boxes = []
         labels = []
@@ -177,8 +176,8 @@ def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BAT
     )
     return train_loader, valid_loader, train_dataset, valid_dataset
 
-training_dirs = [f"{TRAIN_DIR}", f"{TRAIN_DIR}"]
-valid_dirs = [f"{VAL_DIR}", f"{VAL_DIR}"]
+training_dirs = [f"{TRAIN_DIR}/images", f"{TRAIN_DIR}/labels"]
+valid_dirs = [f"{VAL_DIR}/images", f"{VAL_DIR}/labels"]
 
 
 if TRAIN_FOR.value() == 'dolphin':

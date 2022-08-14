@@ -7,7 +7,9 @@ import pycocotools.mask as mask_util
 import torch
 from torch_utils import utils
 from pycocotools.coco import COCO
-from torch_utils.coco_evaluator import COCOeval
+#from torch_utils.coco_evaluator import COCOeval
+from pycocotools.cocoeval import COCOeval
+
 
 class CocoEvaluator:
     def __init__(self, coco_gt, iou_types):
@@ -23,10 +25,8 @@ class CocoEvaluator:
 
         self.img_ids = []
         self.eval_imgs = {k: [] for k in iou_types}
-        self.stats_save = []
-    
-    def save_stats(self):
-        return self.stats_save
+        
+
 
     def update(self, predictions):
         img_ids = list(np.unique(list(predictions.keys())))
@@ -44,6 +44,9 @@ class CocoEvaluator:
 
             self.eval_imgs[iou_type].append(eval_imgs)
 
+            
+
+
     def synchronize_between_processes(self):
         for iou_type in self.iou_types:
             self.eval_imgs[iou_type] = np.concatenate(self.eval_imgs[iou_type], 2)
@@ -53,13 +56,13 @@ class CocoEvaluator:
         for coco_eval in self.coco_eval.values():
             coco_eval.accumulate()
 
-    
-    
+
     def summarize(self):
         for iou_type, coco_eval in self.coco_eval.items():
             print(f"IoU metric: {iou_type}")
-            self.stats_save = coco_eval.summarize()
-            
+            coco_eval.summarize()
+            #
+            # print("RETURN VAR: :", coco_eval.return_var())
 
     def prepare(self, predictions, iou_type):
         if iou_type == "bbox":
@@ -93,6 +96,7 @@ class CocoEvaluator:
                 ]
             )
         return coco_results
+    
 
     def prepare_for_coco_segmentation(self, predictions):
         coco_results = []
@@ -196,3 +200,4 @@ def evaluate(imgs):
     with redirect_stdout(io.StringIO()):
         imgs.evaluate()
     return imgs.params.imgIds, np.asarray(imgs.evalImgs).reshape(-1, len(imgs.params.areaRng), len(imgs.params.imgIds))
+

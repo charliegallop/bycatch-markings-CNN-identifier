@@ -5,7 +5,8 @@ from config import BACKBONE, TRAIN_FOR, NUM_EPOCHS
 # Backbone options
 backbones = [
     "mobilenet",
-    "resnet"
+    "resnet",
+    "mobilenet_320"
 ]
 
 # Train_for options:

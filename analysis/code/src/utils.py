@@ -1,6 +1,7 @@
 import albumentations as A
 import cv2
 import numpy as np
+import pandas as pd
 import torch
 import os
 
@@ -46,6 +47,8 @@ def get_train_transform():
         A.MotionBlur(p=0.2),
         A.MedianBlur(blur_limit = 3, p = 0.1),
         A.Blur(blur_limit = 3, p=0.1),
+        A.RandomBrightnessContrast(p=0.3),
+        A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=0.3),
         ToTensorV2(p=1.0)
     ], bbox_params = {
         'format': 'pascal_voc',
@@ -87,8 +90,8 @@ def show_transformed_image(train_loader):
                 cv2.destroyAllWindows()
 
 def write_preds_to_file(predictions, image_name, save_dir):
-    save_dir = save_dir
-    with open(f"{save_dir}/{image_name}.txt", 'w') as f:
+    save_as = os.path.join(save_dir, 'preds', image_name + ".txt")
+    with open(save_as, 'w') as f:
         for pred in predictions:
             f.write(f"{pred}\n")
 
@@ -140,3 +143,18 @@ def get_labels(classes, member, width, height, boxes, labels, image_width, image
 
     boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
     return boxes, labels
+
+def save_metrics(boxes, pred_classes, scores, image_name, master_list):
+    metrics = []
+    boxes = boxes.tolist()
+    scores = scores.tolist()
+    for i in range(len(boxes)):
+        metrics = [[image_name], [pred_classes[i]], boxes[i], [scores[i]]]
+        metrics = [x for l in metrics for x in l]
+        master_list.append(metrics)
+
+
+    #temp_df = pd.DataFrame(columns = ["image_name", "class", "xmin", "ymin", "xmax", "ymax", "xmin_pred", "ymin_pred", "xmax_pred", "ymax_pred", "score"])
+
+    return master_list
+

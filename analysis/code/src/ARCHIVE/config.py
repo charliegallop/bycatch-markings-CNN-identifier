@@ -22,7 +22,7 @@ class TRAIN_FOR:
 
 class BACKBONE:
     def __init__(self): 
-        self.backbone = "mobilenet"
+        self.backbone = "resnet"
     
     def __str__(self):
         return self.backbone
@@ -56,8 +56,8 @@ class NUM_EPOCHS:
 
 THRESHOLD = 0.5
 
-BATCH_SIZE = 8 # increase / decrease according to GPU memory
-RESIZE_TO = 1024
+BATCH_SIZE = 3 # increase / decrease according to GPU memory
+RESIZE_TO = 512
 
 # choose which backbone to load for the faster r-cnn model
 # Choices:
@@ -69,11 +69,9 @@ BACKBONE = BACKBONE()
 NUM_EPOCHS = NUM_EPOCHS()
 
 
-#ROOT = os.path.join('C:\\Users\\cg639\\OneDrive - University of Exeter\\MASTER BACKUP\\dissy\\analysis')
 ROOT = os.path.join(os.getcwd(), 'analysis')
-
 DATA_DIR = os.path.join(ROOT, 'data')
-MASTER_DIR = os.path.join(ROOT, 'master')
+MASTER_DIR = os.path.join('master')
 # location to save model and plots
 OUT_DIR = os.path.join(ROOT, 'outputs')
 # training images and XML files directory
@@ -83,7 +81,7 @@ VAL_DIR = os.path.join(DATA_DIR, 'val')
 # Directory of test images and XML files
 TEST_DIR = os.path.join(DATA_DIR, 'test')
 
-EVAL_DIR = os.path.join(DATA_DIR, 'evaluation', 'eval')
+EVAL_DIR = os.path.join(DATA_DIR, 'evaluation', 'eval', TRAIN_FOR.value())
 
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 

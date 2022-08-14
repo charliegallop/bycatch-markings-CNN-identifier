@@ -1,0 +1,12 @@
+name: dissyPytorch
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - ipython
+  - cudatoolkit=11.6
+  - torchvision
+  - cudnn=8.1.0
+  - pytorch
+  - torchaudio
+prefix: /home/charlie/miniconda3/envs/dissyPytorch

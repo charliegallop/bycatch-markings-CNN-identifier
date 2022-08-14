@@ -95,10 +95,9 @@ def calc_metrics(model, classes):
             if len(outputs[0]['boxes']) != 0:
                 boxes = outputs[0]['boxes'].data.numpy()
                 scores = outputs[0]['scores'].data.numpy()
-                # print(outputs, test_images[i])
 
                 # save predictions in a text file so can be used to get metrics
-                save_predictions_as_txt(outputs, image_name, f"{EVAL_DIR}/label_predictions")
+                save_predictions_as_txt(outputs, image_name, f"{EVAL_DIR}")
 
                 # filter out boxes according to the detection threshold
                 boxes = boxes[scores >= THRESHOLD].astype(np.int32)
@@ -119,7 +118,7 @@ def calc_metrics(model, classes):
                     
                     # cv2.imshow('Prediction', orig_image)
                     # cv2.waitKey(1)
-                    write_to_dir = os.path.join(EVAL_DIR, "image_predictions", f'{image_name}.jpg')
+                    write_to_dir = os.path.join(EVAL_DIR, "images", f'{image_name}.jpg')
                     cv2.imwrite(write_to_dir, orig_image)
                     print(f"Image {i+1} image saved...")
                 print(f"Image {i+1} done...")

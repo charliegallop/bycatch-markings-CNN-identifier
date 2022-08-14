@@ -1,7 +1,6 @@
 # https://towardsdatascience.com/convert-pascal-voc-xml-to-yolo-for-object-detection-f969811ccba5
 
-from config import DATA_DIR, TRAIN_FOR, MASTER_DIR, RESIZE_TO, EVAL_DIR
-import edit_xml
+from config import DATA_DIR, TRAIN_FOR, MASTER_DIR
 import random
 import glob
 import os
@@ -16,21 +15,11 @@ set_list = {"train": 0.8, "val": 0.1, "test": 0.1}
 # Select all image paths from master directory
 image_paths = glob.glob(os.path.join(master_dir, "images", '*.jpg'))
 
-def remove_small_iamges():
-    from PIL import Image
-    for image in image_paths:
-        img=Image.open(image)
-        if (img.size[0] < RESIZE_TO) and (img.size[1] < RESIZE_TO):
-            image_paths.remove(image)
-            print("REMOVING: ", os.path.basename(image), "since size is: ", img.size)
-
 # Shuffle paths
 random.Random(4).shuffle(image_paths)
 
 check_sum = sum([set_list[x] for x in set_list])
 assert check_sum == 1.0, "Split proportion is not equal to 1.0"
-
-
 
 def copyfiles(fil, set_dir):
     basename = os.path.basename(fil)
@@ -47,7 +36,7 @@ def copyfiles(fil, set_dir):
     if os.path.exists(src):
         shutil.copyfile(src, dest)
 
-def check_dir_already_exists(sets = set_list):
+def check_dir_already_exists(sets = {"train": 0.8, "val": 0.1, "test": 0.1}):
     safe_to_create_dir = False
     existing_dir = []
     for s in sets:
@@ -97,11 +86,8 @@ def main():
             print("EXECUTING CREATE")
             create_set_directories(se)
         print("SPLIT CREATE")
-        remove_small_iamges()
+
         split_files(image_paths, lower_limit, set_list)
-        from config import BACKBONE
-        WRITE_XML_TO = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), 'gt')
-        edit_xml.keep_labels(WRITE_XML_TO, TRAIN_FOR.value())
 
     else:
         print("Directories already exist")
