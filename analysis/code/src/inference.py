@@ -71,8 +71,6 @@ class Inference_engine():
         img_width = img.shape[1]
         img_height = img.shape[0]
 
-        print("COORDS BEFORE: ", coords)
-
         if ((coords['ymin']  - img_height*buffer) >= 0):
             coords['ymin'] = int(coords['ymin']  - img_height*buffer)
         if ((coords['xmin']  - img_width*buffer) >= 0):
@@ -82,8 +80,6 @@ class Inference_engine():
         if ((coords['xmax']  + img_width*buffer) >= 0):
             coords['xmax'] = int(coords['xmax']  + img_width*buffer)
             
-        print("COORDS AFTER: ", coords)
-
         crop = img[coords['ymin']:coords['ymax'], coords['xmin']:coords['xmax']]
         return crop
 
@@ -173,14 +169,19 @@ class Inference_engine():
                 print(f"Image {i+1} done... {self.saved_images} saved")
                 print('-'*50)
 
-            print(box_to_crop)
             if (self.crop) & (len(box_to_crop) != 0):
                 print("Cropping image....")
                 cropped_img = self.crop_image(orig_image, box_to_crop)
-                print("CROPPED IMAGE: ", cropped_img)
                 write_to_dir = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), 'images', f'{image_name}_cropped.jpg')
                 cv2.imwrite(write_to_dir, cropped_img)
                 print("Croped image saved!")
+        # move edit xml files with only dolphin label to directory
+        copy_to = os.path.join(MASTER_MARKINGS_DIR, 'labels')
+        keep_labels(
+                label_dir=self.labels_dir, 
+                WRITE_TO=copy_to, 
+                label_to_keep=TRAIN_FOR
+                )
 
         # TODO: add ground truth bouding boxes to the df
         df = pd.DataFrame(columns = ["image_name", "class", "xmin_pred", "ymin_pred", "xmax_pred", "ymax_pred", "score"])

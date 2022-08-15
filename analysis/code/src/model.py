@@ -40,11 +40,11 @@ def create_model(num_classes, backbone, load_state_from = None):
         # define a new head for the detector with required number of classes
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
-    if load_state_from:
-        model = create_model(num_classes=num_classes, backbone = backbone).to(DEVICE)
-        model_path = load_state
-        self.model.load_state_dict(torch.load(
-            model_path, map_location = DEVICE
-        ))
+    # if load_state_from:
+    #     model = create_model(num_classes=num_classes, backbone = backbone).to(DEVICE)
+    #     model_path = load_state_from
+    #     model.load_state_dict(torchvision.load(
+    #         model_path, map_location = DEVICE
+    #     ))
 
     return model

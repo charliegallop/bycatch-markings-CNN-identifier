@@ -62,10 +62,6 @@ class BycatchDataset(Dataset):
                     if member.find('name').text == 'dolphin':
                         boxes, labels = get_labels(self.classes, member, self.width, self.height, boxes, labels, image_width=image_width, image_height = image_height)
                 else:
-                    print("-"*50)
-                    print("DOLPHIN LABEL DOES NOT EXIST")
-                    print("-"*50)
-
                     background_bb = {
                         'xmin_final': 0.0,
                         'xmax_final': self.width,
@@ -75,7 +71,6 @@ class BycatchDataset(Dataset):
                     # create 'dolphin' bounding box assuming it covers the whole image
                     boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
                     labels.append(0)
-                    print(image_name)
 
         elif self.selection == 'markings':
             for member in root.findall('object'):

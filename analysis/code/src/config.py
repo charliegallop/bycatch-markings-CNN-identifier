@@ -56,8 +56,8 @@ class NUM_EPOCHS:
 
 THRESHOLD = 0.5
 
-BATCH_SIZE = 8 # increase / decrease according to GPU memory
-RESIZE_TO = 1024
+BATCH_SIZE = 4 # increase / decrease according to GPU memory
+RESIZE_TO = 512
 
 # choose which backbone to load for the faster r-cnn model
 # Choices:
@@ -82,6 +82,12 @@ TRAIN_DIR = os.path.join(DATA_DIR, 'train')
 VAL_DIR = os.path.join(DATA_DIR, 'val')
 # Directory of test images and XML files
 TEST_DIR = os.path.join(DATA_DIR, 'test')
+# Markings root dir for images and labels
+MARKINGS_DIR = os.path.join(DATA_DIR, 'markings')
+# Master dir for marking images that have been cropped from dolphin model
+MASTER_MARKINGS_DIR = os.path.join(MARKINGS_DIR, 'master')
+
+FINAL_PREDS_DIR = os.path.join(DATA_DIR, "evaluation", 'final_predictions')
 
 EVAL_DIR = os.path.join(DATA_DIR, 'evaluation', 'eval')
 

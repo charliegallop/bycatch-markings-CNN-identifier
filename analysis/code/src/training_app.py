@@ -1,5 +1,5 @@
 import tkinter as tk
-from engine import engine
+from training_engine import engine
 from config import BACKBONE, TRAIN_FOR, NUM_EPOCHS
 
 # Backbone options
@@ -96,6 +96,13 @@ def infer_model():
     MODEL_PATH = check_model_entry()
     infer_engine = Inference_engine(BACKBONE.value(), TRAIN_FOR.value(), MODEL_PATH)
     infer_engine.infer()
+
+def crop_model():
+    from cropping import Cropping_engine
+    global TRAIN_FOR
+    crop_engine = Cropping_engine(BACKBONE.value(), TRAIN_FOR.value(), CROP_MODEL_PATH, IMAGES_DIR)
+    crop_engine.crop_and_save()
+
 
 
 button = tk.Button(root, text= "Run Model", command = train_model)

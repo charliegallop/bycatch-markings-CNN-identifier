@@ -3,17 +3,18 @@ from xml.etree import ElementTree as et
 import glob
 import os
 
-ANNOT_DIR = os.path.join(TEST_DIR, "labels")
-# WRITE_TO = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), "gt")
-ANNOT_PATHS = glob.glob(f"{ANNOT_DIR}/*")
+def keep_labels(WRITE_TO, label_dir, label_to_keep = 'dolphin'):
 
-def keep_labels(WRITE_TO, label_to_keep = 'dolphin'):
+
+    ANNOT_DIR = label_dir
+    # WRITE_TO = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), "gt")
+    ANNOT_PATHS = glob.glob(f"{ANNOT_DIR}/*")
 
     if label_to_keep == 'dolphin':
         print("Making XML files for 'dolphin'....")
-        print(ANNOT_PATHS)
-
+        print("ANNOT: ", ANNOT_PATHS)
         for i in ANNOT_PATHS:
+            print(i)
             image_name = os.path.basename(i)
             tree = et.parse(i)
             root = tree.getroot()
@@ -42,5 +43,5 @@ def keep_labels(WRITE_TO, label_to_keep = 'dolphin'):
         print("NOT A VALID LABEL")
 
 #keep_labels('markings')
-WRITE_TO = os.path.join(EVAL_DIR, "dolphin", "mobilenet_320", "gt")
-keep_labels(WRITE_TO, 'dolphin')
+#WRITE_TO = os.path.join(EVAL_DIR, "dolphin", "mobilenet_320", "gt")
+#keep_labels(WRITE_TO, 'dolphin')

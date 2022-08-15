@@ -1,7 +1,6 @@
 # https://towardsdatascience.com/convert-pascal-voc-xml-to-yolo-for-object-detection-f969811ccba5
 
 from config import DATA_DIR, TRAIN_FOR, MASTER_DIR, RESIZE_TO, EVAL_DIR
-import edit_xml
 import random
 import glob
 import os
@@ -101,6 +100,7 @@ def main():
         split_files(image_paths, lower_limit, set_list)
         from config import BACKBONE
         WRITE_XML_TO = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), 'gt')
+        import edit_xml
         edit_xml.keep_labels(WRITE_XML_TO, TRAIN_FOR.value())
 
     else:
