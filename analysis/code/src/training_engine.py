@@ -357,6 +357,7 @@ class engine():
         print("TRAIN_FOR: ", self.train_for)
         if self.train_for == 'dolphin':
             val_images_dir = os.path.join(VAL_DIR, "images")
+            val_labels_dir = os.path.join(MARKINGS_DIR, "val", "labels")
             image_paths_dir = os.path.join(val_images_dir, "*")
             image_paths = glob.glob(image_paths_dir)
 
@@ -365,12 +366,14 @@ class engine():
                 self.backbone, 
                 self.train_for, 
                 MODEL_PATH=mod_path,
-                IMAGES_DIR=val_images_dir, 
+                IMAGES_DIR=val_images_dir,
+                LABELS_DIR=val_labels_dir,
                 MODEL=self.model
                 )
             cropped_image = cropping_engine.crop_and_save()
         else:
             val_images_dir = os.path.join(MARKINGS_DIR, "val", "images")
+            val_labels_dir = os.path.join(MARKINGS_DIR, "val", "labels")
             image_paths_dir = os.path.join(val_images_dir, "*")
             image_paths = glob.glob(image_paths_dir)
 
@@ -379,7 +382,8 @@ class engine():
                 self.backbone, 
                 self.train_for, 
                 MODEL_PATH=mod_path, 
-                IMAGES_DIR=val_images_dir, 
+                IMAGES_DIR=val_images_dir,
+                LABELS_DIR=val_labels_dir,
                 MODEL=self.model
                 )
             cropped_image = cropping_engine.crop_and_save()

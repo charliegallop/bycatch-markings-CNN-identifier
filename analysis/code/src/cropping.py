@@ -15,14 +15,13 @@ from edit_xml import keep_labels
 
 class Cropping_engine():
 
-    def __init__(self, BACKBONE, TRAIN_FOR, IMAGES_DIR, MODEL_PATH=None,  MODEL=None,):
+    def __init__(self, BACKBONE, TRAIN_FOR, IMAGES_DIR, LABELS_DIR, MODEL_PATH=None,  MODEL=None,):
 
         self.train_for = TRAIN_FOR
         self.saved_images = 0
         self.crop_model = None
         self.images_dir = IMAGES_DIR
-        print("IMAGES DIR:", self.images_dir)
-        self.labels_dir = os.path.join("/", *self.images_dir.split('/')[:-1], "labels")
+        self.labels_dir = LABELS_DIR
         self.crop = False
         self.backbone = BACKBONE
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
