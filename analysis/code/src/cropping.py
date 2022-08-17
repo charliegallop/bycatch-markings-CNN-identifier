@@ -245,19 +245,11 @@ class Cropping_engine():
                 # get all the predicted class names
                 pred_classes = [self.classes[i] for i in outputs[0]['labels'].cpu().numpy()]
                 # draw the bounding boxes and write class name on top of it
-                print("DRAW_BOXES BEFORE IF: ", draw_boxes)
-                print("LEN DRAW_BOXES BEFORE IF: ", len(draw_boxes))
                 saved = False
                 if len(draw_boxes) != 0:
-                    print("DRAW_BOXES AFTER IF: ", draw_boxes)
-                    print("LEN DRAW_BOXES AFTER IF: ", len(draw_boxes))
-
+                    bb_count = 0
                     for j, box in enumerate(draw_boxes):
-                        print("J: ", j)
-                        print("DRAW_BOXES FOR: ", draw_boxes[j], draw_boxes)     
-                        print("BOX FOR: ", box, box)         
-
-
+                       
                         # only do this is self.crop is true which should only be for dophins
                         if self.crop:
                             area = self._getArea(box)
@@ -275,9 +267,11 @@ class Cropping_engine():
                                     (int(box[0]), int(box[1]-5)),
                                     cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 255, 255), 
                                     2, lineType=cv2.LINE_AA)
-                        write_to_dir = os.path.join(EVAL_DIR, self.train_for, self.backbone, 'images', f'{image_name}.jpg')
-                        print("SAVING TO: ", write_to_dir)
-                        cv2.imwrite(write_to_dir, orig_image_bb)
+                        bb_count += 1
+                    write_to_dir = os.path.join(EVAL_DIR, self.train_for, self.backbone, 'images', f'{image_name}.jpg')
+                    print("SAVING TO: ", write_to_dir)
+                    print(f"Predicted {bb_count} bounding boxes")
+                    cv2.imwrite(write_to_dir, orig_image_bb)
                 else:
                     print("No predictions over threshold...saving original image...")
                     write_to_dir = os.path.join(EVAL_DIR, self.train_for, self.backbone, 'images', f'{image_name}.jpg')

@@ -56,7 +56,7 @@ class num_epochs:
 
 THRESHOLD = 0.5
 
-BATCH_SIZE = 64 # increase / decrease according to GPU memory
+BATCH_SIZE = 68 # increase / decrease according to GPU memory
 RESIZE_TO = 224
 
 # choose which backbone to load for the faster r-cnn model

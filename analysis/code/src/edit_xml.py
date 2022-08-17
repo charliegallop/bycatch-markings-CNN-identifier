@@ -5,12 +5,9 @@ import os
 
 def keep_labels(WRITE_TO, label_dir, label_to_keep = 'dolphin'):
 
-
-    ANNOT_DIR = label_dir
     # WRITE_TO = os.path.join(EVAL_DIR, TRAIN_FOR.value(), BACKBONE.value(), "gt")
-    annot_paths_dir = os.path.join(ANNOT_DIR)
-    print("ANNOT_PATHS_DIR: ", annot_paths_dir)
-    ANNOT_PATHS = glob.glob(annot_paths_dir)
+    print(label_dir)
+    ANNOT_PATHS =glob.glob(f"{label_dir}/*")
     print(ANNOT_PATHS)
 
     if label_to_keep == 'dolphin':

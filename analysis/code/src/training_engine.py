@@ -357,7 +357,7 @@ class engine():
         print("TRAIN_FOR: ", self.train_for)
         if self.train_for == 'dolphin':
             val_images_dir = os.path.join(VAL_DIR, "images")
-            val_labels_dir = os.path.join(MARKINGS_DIR, "val", "labels")
+            val_labels_dir = os.path.join(VAL_DIR, "labels")
             image_paths_dir = os.path.join(val_images_dir, "*")
             image_paths = glob.glob(image_paths_dir)
 
