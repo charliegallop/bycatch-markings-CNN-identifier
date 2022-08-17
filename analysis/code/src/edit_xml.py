@@ -12,9 +12,7 @@ def keep_labels(WRITE_TO, label_dir, label_to_keep = 'dolphin'):
 
     if label_to_keep == 'dolphin':
         print("Making XML files for 'dolphin'....")
-        print("ANNOT: ", ANNOT_PATHS)
         for i in ANNOT_PATHS:
-            print(i)
             image_name = os.path.basename(i)
             tree = et.parse(i)
             root = tree.getroot()
@@ -22,8 +20,8 @@ def keep_labels(WRITE_TO, label_dir, label_to_keep = 'dolphin'):
                 if member.find('name').text != 'dolphin':
                     root.remove(member)
             save_as = os.path.join(WRITE_TO, image_name)
-            print("SAVING TO: ", save_as)
             tree.write(save_as)
+        print("XML files saved to: ", WRITE_TO)
 
     elif label_to_keep == 'markings':
         print("Making XML files for 'markings'....")
@@ -37,8 +35,9 @@ def keep_labels(WRITE_TO, label_dir, label_to_keep = 'dolphin'):
                     root.remove(member)
 
             save_as = os.path.join(WRITE_TO, image_name)
-            print("SAVING TO: ", save_as)
             tree.write(save_as)
+        print("XML files saved to: ", WRITE_TO)
+        
     else:
         print("NOT A VALID LABEL")
 

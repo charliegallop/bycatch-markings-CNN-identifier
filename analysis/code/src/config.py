@@ -6,7 +6,7 @@ import os
 # - "markings"
 # - "all"
 
-class TRAIN_FOR:
+class train_for:
     def __init__(self): 
         self.train_for = "dolphin"
     
@@ -20,7 +20,7 @@ class TRAIN_FOR:
     def value(self):
         return self.train_for
 
-class BACKBONE:
+class backbone:
     def __init__(self): 
         self.backbone = "mobilenet"
     
@@ -34,7 +34,7 @@ class BACKBONE:
     def value(self):
         return self.backbone
 
-class NUM_EPOCHS:
+class num_epochs:
     def __init__(self): 
         self.num_epochs = 50
     
@@ -56,17 +56,17 @@ class NUM_EPOCHS:
 
 THRESHOLD = 0.5
 
-BATCH_SIZE = 4 # increase / decrease according to GPU memory
-RESIZE_TO = 512
+BATCH_SIZE = 3 # increase / decrease according to GPU memory
+RESIZE_TO = 224
 
 # choose which backbone to load for the faster r-cnn model
 # Choices:
 #   - 'mobilenet'
 #   - 'resnet'
 
-TRAIN_FOR = TRAIN_FOR()
-BACKBONE = BACKBONE()
-NUM_EPOCHS = NUM_EPOCHS()
+TRAIN_FOR = train_for()
+BACKBONE = backbone()
+NUM_EPOCHS = num_epochs()
 
 
 #ROOT = os.path.join('C:\\Users\\cg639\\OneDrive - University of Exeter\\MASTER BACKUP\\dissy\\analysis')

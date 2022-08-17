@@ -17,7 +17,7 @@ backbones_pred = [
 ]
 
 fs = 16
-
+tf = 14
 # # Train_for options:
 # train_fors = [
 #     "dolphin",
@@ -137,13 +137,22 @@ def selectImgDir():
 
     label3.configure(text = f"Selected image directory: \n{IMAGES_DIR}")
 
-button_explore3 = tk.Button(root,
-                        text = "Select Image Directory",
-                        command = selectImgDir)
+button_explore3 = tk.Button(
+    root, 
+    text = "Select Image Directory",
+    command = selectImgDir
+    )
 button_explore3.pack()
 
  # Create Label
-label3 = tk.Label( root , text = f"Selected image directory: \n{IMAGES_DIR}", width = 100, height = 4, fg = "blue", font=('Arimo', fs) )
+label3 = tk.Label( 
+    root, 
+    text = f"Selected image directory: \n{IMAGES_DIR}", 
+    width = 100, 
+    height = 4, 
+    fg = "blue", 
+    font=('Arimo', fs)
+    )
 label3.pack()
 
 
@@ -166,25 +175,47 @@ def predict_model():
 def crop_model():
     from cropping import Cropping_engine
     TRAIN_FOR = "dolphin"
-    crop_engine = Cropping_engine(CROP_BACKBONE, TRAIN_FOR, CROP_MODEL_PATH, IMAGES_DIR)
+    crop_engine = Cropping_engine(
+        BACKBONE=CROP_BACKBONE,
+        TRAIN_FOR=TRAIN_FOR,
+        MODEL_PATH= CROP_MODEL_PATH,
+        IMAGES_DIR= IMAGES_DIR
+        )
     crop_engine.crop_and_save()
 
 
 #Label
-label_predict = tk.Label(text="", font=('Arimo', fs), fg="#e36414")
+label_predict = tk.Label(
+    text="Select what model to use for prediction and what to predict for...", 
+    font=('Arimo', fs), 
+    fg="#e36414")
 label_predict.pack(side="top")
 
 
-button = tk.Button(root, text= "Run Model", command = predict_model)
+button = tk.Button(
+    root, 
+    text= "Make Predictions", 
+    font = ('Ariel', tf), 
+    command = predict_model
+    )
 button.pack()
 
 
 
 #Label
-label_crop = tk.Label(text="", font=('Arimo', fs), fg="#e36414")
+label_crop = tk.Label(
+    text="Select the model to be used for cropping...", 
+    font=('Arimo', fs), 
+    fg="#e36414"
+    )
 label_crop.pack(side="top")
 
-button = tk.Button(root, text= "Crop Model", command = crop_model)
+button = tk.Button(
+    root, 
+    text= "Predict and crop\n(for dolphin)", 
+    command = crop_model,
+    font = ('Arimo', tf), 
+    )
 button.pack()
 
 # Function for opening the

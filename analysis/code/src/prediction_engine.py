@@ -4,16 +4,9 @@ from config import VISUALIZE_TRANSFORMED_IMAGES, BACKBONE
 from config import SAVE_PLOTS_EPOCH, SAVE_MODEL_EPOCH
 from config import FINAL_PREDS_DIR, ROOT
 from model import create_model
-from utils import Averager, save_predictions_as_txt, save_metrics
-from tqdm.auto import tqdm
-from torch_utils.engine import (
-    train_one_epoch, evaluate
-)
+from utils import save_predictions_as_txt, save_metrics
 from cropping import Cropping_engine
-
-from custom_eval import validate
 from custom_eval import calc_metrics
-import split_datasets
 
 import torch
 import matplotlib.pyplot as plt
@@ -30,6 +23,7 @@ plt.style.use('Solarize_Light2')
 class predict_engine():
 
     def __init__(self, PRED_BACKBONE, CROP_BACKBONE, TRAIN_FOR, IMAGES_DIR, CROP_MODEL_PATH, PRED_MODEL_PATH):
+        self.count = 0
         self.train_for = TRAIN_FOR
         self.crop_backbone = CROP_BACKBONE
         self.pred_backbone = PRED_BACKBONE
@@ -46,6 +40,7 @@ class predict_engine():
         self.start_epoch = 0
         self.all_stats = []
 
+        
         if CROP_MODEL_PATH:
             self.crop_model_path = CROP_MODEL_PATH
             self.crop_model.load_state_dict(torch.load(
@@ -84,19 +79,24 @@ class predict_engine():
             print("-"*50)
         else:
             print("PLEASE SET PATH FOR PREDICTION MODEL")
-
+    
     def predict(self, image, image_path):
         print("Making predictions...")
         self.pred_model.eval()
         image_name = os.path.basename(image_path).split('.')[-2]
+
         # image = cv2.imread(image).astype(np.float32)
         orig_image = image.copy()
+
         # make the pixel range between 0 and 1
         image /= 255.0
+
         # bring color channels to front
         image = np.transpose(image, (2, 0, 1)).astype(np.float64)
+
         # convert to tensor
         image = torch.tensor(image, dtype = torch.float).cuda()
+
         # add batch dimension
         image = torch.unsqueeze(image, 0)
 
@@ -119,35 +119,47 @@ class predict_engine():
             # filter out boxes according to the detection threshold
             boxes = boxes[scores >= self.detection_threshold].astype(np.int32)
             draw_boxes = boxes.copy()
+
             # get all the predicted class names
             pred_classes = [self.pred_classes[i] for i in outputs[0]['labels'].cpu().numpy()]
-            # draw the bounding boxes and write class name on top of it
-            for j, box in enumerate(draw_boxes):
-                cv2.rectangle(orig_image,
-                            (int(box[0]), int(box[1])),
-                            (int(box[2]), int(box[3])),
-                            (COLOURS[pred_classes[j]]), 3)
-                cv2.putText(orig_image, pred_classes[j].upper() + " CONF: " + str(round(scores[j], 2)), 
-                            (int(box[0]), int(box[1]-5)),
-                            cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 255, 255), 
-                            2, lineType=cv2.LINE_AA)
-                
-                # cv2.imshow('Prediction', orig_image)
-                # cv2.waitKey(1)
 
-                # Save image with box prediction
-                # If > 1 box is predicted it will re-write the image with each new box added
+            # draw the bounding boxes and write class name on top of it
+            if len(draw_boxes) != 0:
+                for j, box in enumerate(draw_boxes):
+                    cv2.rectangle(orig_image,
+                                (int(box[0]), int(box[1])),
+                                (int(box[2]), int(box[3])),
+                                (COLOURS[pred_classes[j]]), 3)
+                    cv2.putText(orig_image, pred_classes[j].upper() + " CONF: " + str(round(scores[j], 2)), 
+                                (int(box[0]), int(box[1]-5)),
+                                cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 255, 255), 
+                                2, lineType=cv2.LINE_AA)
+                    
+                    # cv2.imshow('Prediction', orig_image)
+                    # cv2.waitKey(1)
+
+                    # Save image with box prediction
+                    # If > 1 box is predicted it will re-write the image with each new box added
+                    write_to_dir = os.path.join(FINAL_PREDS_DIR, 'images', f'{image_name}.jpg')
+                    cv2.imwrite(write_to_dir, orig_image)
+                    print(f"Predicitons made....Saved Image {image_name}")
+                    print('-'*50)
+            else:
+
+                # If there are no bounding boxes above threshold, save orig images
                 write_to_dir = os.path.join(FINAL_PREDS_DIR, 'images', f'{image_name}.jpg')
                 cv2.imwrite(write_to_dir, orig_image)
-                
-                print(f"Saved Image {image_name}")
+                print(f"Scores too low, no boxes saved....Saved Image {image_name}")
                 print('-'*50)
         else:
+            print("No predictions, saving original image...")
             write_to_dir = os.path.join(FINAL_PREDS_DIR, 'images', f'{image_name}.jpg')
             cv2.imwrite(write_to_dir, orig_image)
                 
             print(f"Saved Image {image_name}")
             print('-'*50)
+
+        print("Image saved to: ", os.path.join(FINAL_PREDS_DIR, 'images'))
 
     def run(self):
 
@@ -165,7 +177,8 @@ class predict_engine():
         
         save_df = os.path.join(self.output_dir, "all_predictions.csv")
         df.to_csv(save_df)
-        print('TEST PREDICTIONS COMPLETE')
+        print('PREDICTIONS COMPLETE')
+        print("Predictions saved as: ", save_df)
         cv2.destroyAllWindows()
 
         # print("_"*50)

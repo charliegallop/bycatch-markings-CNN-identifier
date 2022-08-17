@@ -1,6 +1,6 @@
 from config import DEVICE, NUM_CLASSES_DOLPHIN, NUM_CLASSES_MARKINGS, NUM_EPOCHS, OUT_DIR, NUM_WORKERS
 from config import THRESHOLD, CLASSES_DOLPHIN,CLASSES_MARKINGS, COLOURS, BATCH_SIZE, RESIZE_TO
-from config import VISUALIZE_TRANSFORMED_IMAGES, BACKBONE
+from config import VISUALIZE_TRANSFORMED_IMAGES
 from config import SAVE_PLOTS_EPOCH, SAVE_MODEL_EPOCH
 from config import VAL_DIR, ROOT
 from model import create_model
@@ -13,7 +13,7 @@ from inference import Inference_engine
 
 from custom_eval import validate
 from custom_eval import calc_metrics
-import split_datasets
+
 
 import torch
 import matplotlib.pyplot as plt
@@ -30,8 +30,10 @@ plt.style.use('Solarize_Light2')
 class engine():
 
     def __init__(self, BACKBONE, TRAIN_FOR, EPOCHS, MODEL_PATH = None):
+
+        self.train_for = TRAIN_FOR
         
-        if TRAIN_FOR == 'dolphin':
+        if self.train_for == 'dolphin':
             
             print('-'*50)
             print("DOLPHIN DATALOADER SELECTED")
@@ -40,7 +42,7 @@ class engine():
             
             self.classes = CLASSES_DOLPHIN
             self.num_classes = NUM_CLASSES_DOLPHIN
-        elif TRAIN_FOR == 'markings':
+        elif self.train_for == 'markings':
 
             print('-'*50)
             print("MARKINGS DATALOADER SELECTED")
@@ -48,11 +50,11 @@ class engine():
 
             self.classes = CLASSES_MARKINGS
             self.num_classes = NUM_CLASSES_MARKINGS
+
           
         else:
             print("NOT A VALID SELECTION")
         
-        self.train_for = TRAIN_FOR
         self.backbone = BACKBONE
         self.output_dir = os.path.join(OUT_DIR, self.train_for, self.backbone)
         self.learning_rate = 0.001
@@ -60,7 +62,7 @@ class engine():
         self.num_epochs = EPOCHS
         print("Num of Epochs: " ,self.num_epochs)
         # initialize the model and move to the computation device
-        self.model = create_model(num_classes=self.num_classes, backbone = BACKBONE).to(DEVICE)
+        self.model = create_model(num_classes=self.num_classes, backbone = self.backbone).to(DEVICE)
         self.start_epoch = 0
         self.model_path = MODEL_PATH
 
@@ -173,18 +175,23 @@ class engine():
         if prompt.lower() == "y":
             print('_'*50)
             print('Reconfiguring datasets....')
-
-            split_datasets.main()
+            if self.train_for == 'dolphin':
+                import split_datasets
+                split_datasets.main()
+            elif self.train_for == 'markings':
+                import split_datasets
+                split_datasets.main_markings()
             print('_'*50)
 
         else:
             print('_'*50)
             print("Keeping previous datasets")
 
-
+        
         from datasets import train_loader, valid_loader
         self.train_loader = train_loader
         self.valid_loader = valid_loader
+        
 
         print('-'*50)
         print(f"Training with '{self.backbone}' backbone to detect '{self.train_for}'")
@@ -330,14 +337,21 @@ class engine():
 
 
                 plt.close('all')
-        from config import TRAIN_FOR
+        from config import MARKINGS_DIR
         from cropping import Cropping_engine
+        
+        print("TRAIN_FOR: ", self.train_for)
+        if self.train_for == 'dolphin':
+            val_images_dir = os.path.join(VAL_DIR, "images")
+            image_paths = glob.glob(f"{val_images_dir}/*")
+            cropping_engine = Cropping_engine(self.backbone, self.train_for, MODEL_PATH=f"{self.output_dir}/model{epoch+1}.pth", IMAGES_DIR=val_images_dir, MODEL=self.model)
+            cropped_image = cropping_engine.crop_and_save()
+        else:
+            val_images_dir = os.path.join(MARKINGS_DIR, "val", "images")
+            image_paths = glob.glob(f"{val_images_dir}/*")
 
-        val_images_dir = os.path.join(VAL_DIR, "images")
-        image_paths = glob.glob(f"{val_images_dir}/*")
-
-        cropping_engine = Cropping_engine(self.backbone, self.train_for, MODEL_PATH=f"{self.output_dir}/model{epoch+1}.pth", IMAGES_DIR=val_images_dir, MODEL=self.model)
-        cropped_image = cropping_engine.crop_and_save()
+            cropping_engine = Cropping_engine(self.backbone, self.train_for, MODEL_PATH=f"{self.output_dir}/model{epoch+1}.pth", IMAGES_DIR=val_images_dir, MODEL=self.model)
+            cropped_image = cropping_engine.crop_and_save()
 
         # infer_engine = Inference_engine(BACKBONE.value(), TRAIN_FOR.value(), f"{self.output_dir}/model{epoch+1}.pth")
         # infer_engine.infer()

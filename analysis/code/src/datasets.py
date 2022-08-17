@@ -13,13 +13,12 @@ from utils import collate_fn, get_train_transform, get_valid_transform, get_labe
 # the dataset class
 class BycatchDataset(Dataset):
     def __init__(self, dir_path, annot_path, width, height, classes, selection, transforms=None):
-        self.selection = selection
+        self.selection = TRAIN_FOR.value()
         self.transforms = transforms
         self.dir_path = dir_path
         self.height = height
         self.width = width
         self.classes = classes
-
         self.annot_dir = os.path.join(self.dir_path, "labels")
         # get all the image paths in sorted order
         self.image_dir = os.path.join(self.dir_path, "images")
@@ -152,10 +151,28 @@ def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BAT
     print(f"Creating dataloaders for {TRAIN_FOR.value()} dataset")
     print('_'*50)
 
+    transforms = [get_train_transform(), get_valid_transform()]
 
-    train_dataset = BycatchDataset(train_dirs[0], train_dirs[1], resize_to, resize_to, classes, train_for, transforms[0])
-    valid_dataset = BycatchDataset(valid_dirs[0], valid_dirs[1], resize_to, resize_to, classes, train_for, transforms[1])
+    train_dataset = BycatchDataset(
+        dir_path= train_dirs[0], 
+        annot_path= train_dirs[1], 
+        width= resize_to, 
+        height= resize_to, 
+        classes= classes, 
+        selection= train_for, 
+        transforms= transforms[0]
+        )
 
+    valid_dataset = BycatchDataset(
+        dir_path= valid_dirs[0], 
+        annot_path= valid_dirs[1], 
+        width= resize_to, 
+        height= resize_to, 
+        classes= classes, 
+        selection= train_for, 
+        transforms= transforms[1]
+        )
+    # initiate train loader
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -163,6 +180,8 @@ def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BAT
         num_workers=NUM_WORKERS,
         collate_fn=collate_fn
     )
+
+    # initiate validation loader
     valid_loader = DataLoader(
         valid_dataset,
         batch_size=batch_size,
@@ -170,6 +189,7 @@ def make_dataloader(train_dirs, valid_dirs, classes, train_for, batch_size = BAT
         num_workers=NUM_WORKERS,
         collate_fn=collate_fn
     )
+    
     return train_loader, valid_loader, train_dataset, valid_dataset
 
 training_dirs = [f"{TRAIN_DIR}", f"{TRAIN_DIR}"]
@@ -177,8 +197,13 @@ valid_dirs = [f"{VAL_DIR}", f"{VAL_DIR}"]
 
 
 if TRAIN_FOR.value() == 'dolphin':
+    training_dirs = [f"{TRAIN_DIR}", f"{TRAIN_DIR}"]
+    valid_dirs = [f"{VAL_DIR}", f"{VAL_DIR}"]
     train_loader, valid_loader, train_dataset, valid_dataset = make_dataloader(training_dirs, valid_dirs, CLASSES_DOLPHIN, "dolphin")
 elif TRAIN_FOR.value() == 'markings':
+    from config import MARKINGS_DIR
+    training_dirs = [os.path.join(MARKINGS_DIR, "train"), os.path.join(MARKINGS_DIR, "train")]
+    valid_dirs = [os.path.join(MARKINGS_DIR, "val"), os.path.join(MARKINGS_DIR, "val")]
     train_loader, valid_loader, train_dataset, valid_dataset = make_dataloader(training_dirs, valid_dirs, CLASSES_MARKINGS, "markings")
 
 print(f"Number of training samples: {len(train_dataset)}")
