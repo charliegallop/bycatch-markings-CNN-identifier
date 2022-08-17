@@ -18,8 +18,7 @@ import skimage.exposure as exposure
 
 for s in sets:
 
-    images_dir = os.path.join(ROOT_DIR, "data", s)
-    val_dir = images_dir = os.path.join(ROOT_DIR, "data", s)
+    images_dir = os.path.join(ROOT_DIR, "data", s, "images")
     image_paths = glob.glob(f"{images_dir}/*")
 
     for path in image_paths:
@@ -32,7 +31,17 @@ for s in sets:
         blur = cv2.GaussianBlur(img,(3,3),0)
 
         # apply sobel x derivative
-        sobelx = cv2.Sobel(blur,cv2.CV_64F,1,0,ksize=5)
+        sobelx = cv2.Sobel(blur,cv2.CV_64F,1,0,ksize=3)
+
+        # apply sobel y derivative
+        sobely = cv2.Sobel(blur,cv2.CV_64F,0,1,ksize=3)
+
+        # convert to absolute scale for plotting
+        abs_sobelx = cv2.convertScaleAbs(sobelx)
+        abs_sobely = cv2.convertScaleAbs(sobely)
+
+        # approximate the combined x and y gradient intensity
+        grad = cv2.addWeighted( abs_sobelx, 0.5, abs_sobely, 0.5, 0)
                 
         # # normalize to range -1 to 1
         # sobelx_norm1a = exposure.rescale_intensity(sobelx, in_range='image', out_range=(-1,1))
@@ -41,11 +50,11 @@ for s in sets:
         # sobelx_norm1b = exposure.rescale_intensity(sobelx, in_range='image', out_range=(-255,255)).clip(0,255).astype(np.uint8)
                 
         # normalize to range 0 to 255
-        sobelx_norm8 = exposure.rescale_intensity(sobelx, in_range='image', out_range=(0,255)).astype(np.uint8)
+        #sobel_norm8 = exposure.rescale_intensity(sobel_final, in_range='image', out_range=(0,255)).astype(np.uint8)
 
         # save results
-        save_to = os.path.join(ROOT_DIR, s, image_name)
-        cv2.imwrite(save_to, sobelx_norm8)
+        save_to = os.path.join(ROOT_DIR, s, "images", image_name)
+        cv2.imwrite(save_to, grad)
         # cv2.imwrite('barn_sobel_norm8.jpg', sobelx_norm8)
 
         # # show results

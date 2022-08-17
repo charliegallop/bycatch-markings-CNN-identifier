@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 # get all the image folder paths
 ROOT_DIR = "/home/charlie/Documents/Uni/Exeter - Data Science/Dissertation/alternative_methods/Laplacian"
-sets = ['val']
+sets = ['train']
 
 import cv2
 import numpy as np
@@ -18,10 +18,8 @@ import skimage.exposure as exposure
 
 for s in sets:
 
-    images_dir = os.path.join(ROOT_DIR, "data", s)
-    val_dir = images_dir = os.path.join(ROOT_DIR, "data", s)
+    images_dir = os.path.join(ROOT_DIR, "data", s, "images")
     image_paths = glob.glob(f"{images_dir}/*")
-
     for path in image_paths:
         image_name = os.path.basename(path)
         img = cv.imread(path, 0)
@@ -32,10 +30,10 @@ for s in sets:
         laplacian = cv2.Laplacian(blur,cv2.CV_64F, ksize=5)
             
         # normalize to range 0 to 255
-        laplacian_norm = exposure.rescale_intensity(laplacian, in_range='image', out_range=(0,255)).astype(np.uint8)
+        laplacian_norm = cv2.convertScaleAbs(laplacian)
 
         # save results
-        save_to = os.path.join(ROOT_DIR, s, image_name)
+        save_to = os.path.join(ROOT_DIR, s, "images", image_name)
         cv2.imwrite(save_to, laplacian_norm)
         # cv2.imwrite('barn_sobel_norm8.jpg', sobelx_norm8)
 
