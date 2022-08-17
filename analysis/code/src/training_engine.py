@@ -99,8 +99,9 @@ class engine():
             print("-"*50)
             
             
-            
-            self.loss_hist =glob.glob(f"{self.output_dir}/losses_df.csv")[0]
+            loss_hist_find = os.path.join(self.output_dir, "losses_df.csv")
+            self.loss_hist =glob.glob(loss_hist_find)[0]
+
             if self.loss_hist:
                 self.loss_hist_df = pd.read_csv(self.loss_hist)
 
@@ -166,7 +167,8 @@ class engine():
             "AR_0.5-0.95_large"
             ]
         df = pd.DataFrame(stats, columns=headers)
-        df.to_csv(f"{self.output_dir}/map_stats.csv")
+        save_df_as = os.path.join(self.output_dir, "mAp_stats.csv")
+        df.to_csv(save_df_as)
 
     def run(self):
 
@@ -258,7 +260,8 @@ class engine():
 
 
                 if (epoch+1) % SAVE_MODEL_EPOCH == 0: # save the model after every n epoch
-                    torch.save(self.model.state_dict(), f"{self.output_dir}/model{epoch+1}.pth")
+                    save_mod_to=os.path.join(self.output_dir, f"model{epoch+1}.pth")
+                    torch.save(self.model.state_dict(), save_mod_to)
                     print('SAVING MODEL COMPLETE...\n')
                     print("_"*50)
 
@@ -271,12 +274,18 @@ class engine():
                     valid_ax.plot(self.val_loss_all, color='peru')
                     valid_ax.set_xlabel('Epochs')
                     valid_ax.set_ylabel('validation loss')
-                    figure_1.savefig(f"{self.output_dir}/train_loss_{epoch+1}.png")
-                    figure_2.savefig(f"{self.output_dir}/valid_loss_{epoch+1}.png")
+
+                    save_fig_train = os.path.join(self.output_dir, f"train_loss_{self.num_epochs}.png")
+                    save_fig_val = os.path.join(self.output_dir, f"val_loss_{self.num_epochs}.png")
+                    figure_1.savefig(save_fig_train)
+                    figure_2.savefig(save_fig_val)
+                    
                     print('SAVING PLOTS COMPLETE...')
                     print("_"*50)
 
-                    torch.save(self.model.state_dict(), f"{self.output_dir}/model{epoch+1}.pth")
+                    save_mod_to=os.path.join(self.output_dir, f"model{epoch+1}.pth")
+                    torch.save(self.model.state_dict(), save_mod_to)
+
 
                     losses_df = pd.DataFrame()
                     losses_df['train_loss'] = self.train_loss_all
@@ -292,7 +301,8 @@ class engine():
                     losses_df['val_loss_objectness'] = self.val_loss_objectness_all
                     losses_df['val_loss_rpn_box_reg'] = self.val_loss_rpn_box_reg_all
 
-                    losses_df.to_csv(f"{self.output_dir}/losses_df.csv")
+                    save_losses_as = os.path.join(self.output_dir, "losses_df.csv")
+                    losses_df.to_csv(save_losses_as)
                     self.save_map_stats(self.map_stats)
                     print('SAVING LOSSES AS CSV COMPLETE...')
                     print("_"*50)
@@ -322,18 +332,22 @@ class engine():
                     valid_ax.set_xlabel('Epochs')
                     valid_ax.set_ylabel('validation loss')
 
-                    figure_1.savefig(f"{self.output_dir}/train_loss_{self.num_epochs}.png")
-                    figure_2.savefig(f"{self.output_dir}/valid_loss_{self.num_epochs}.png")
+                    save_fig_train = os.path.join(self.output_dir, f"train_loss_{self.num_epochs}.png")
+                    save_fig_val = os.path.join(self.output_dir, f"val_loss_{self.num_epochs}.png")
+                    figure_1.savefig(save_fig_train)
+                    figure_2.savefig(save_fig_val)
                     print('SAVING FINAL PLOTS COMPLETE...')
                     print("_"*50)
 
-
-                    losses_df.to_csv(f"{self.output_dir}/losses_df.csv")
+                    save_losses_as = os.path.join(self.output_dir, "losses_df.csv")
+                    losses_df.to_csv(save_losses_as)
                     self.save_map_stats(self.map_stats)
 
                     print('SAVING LOSSES AS CSV COMPLETE...')
                     print("_"*50)
-                    torch.save(self.model.state_dict(), f"{self.output_dir}/model{epoch+1}.pth")
+
+                    save_mod_to=os.path.join(self.output_dir, f"model{epoch+1}.pth")
+                    torch.save(self.model.state_dict(), save_mod_to)
 
 
                 plt.close('all')
@@ -343,14 +357,31 @@ class engine():
         print("TRAIN_FOR: ", self.train_for)
         if self.train_for == 'dolphin':
             val_images_dir = os.path.join(VAL_DIR, "images")
-            image_paths = glob.glob(f"{val_images_dir}/*")
-            cropping_engine = Cropping_engine(self.backbone, self.train_for, MODEL_PATH=f"{self.output_dir}/model{epoch+1}.pth", IMAGES_DIR=val_images_dir, MODEL=self.model)
+            image_paths_dir = os.path.join(val_images_dir, "*")
+            image_paths = glob.glob(image_paths_dir)
+
+            mod_path = os.path.join(self.output_dir, f"model{epoch+1}.pth")
+            cropping_engine = Cropping_engine(
+                self.backbone, 
+                self.train_for, 
+                MODEL_PATH=mod_path,
+                IMAGES_DIR=val_images_dir, 
+                MODEL=self.model
+                )
             cropped_image = cropping_engine.crop_and_save()
         else:
             val_images_dir = os.path.join(MARKINGS_DIR, "val", "images")
-            image_paths = glob.glob(f"{val_images_dir}/*")
+            image_paths_dir = os.path.join(val_images_dir, "*")
+            image_paths = glob.glob(image_paths_dir)
 
-            cropping_engine = Cropping_engine(self.backbone, self.train_for, MODEL_PATH=f"{self.output_dir}/model{epoch+1}.pth", IMAGES_DIR=val_images_dir, MODEL=self.model)
+            mod_path = os.path.join(self.output_dir, f"model{epoch+1}.pth")
+            cropping_engine = Cropping_engine(
+                self.backbone, 
+                self.train_for, 
+                MODEL_PATH=mod_path, 
+                IMAGES_DIR=val_images_dir, 
+                MODEL=self.model
+                )
             cropped_image = cropping_engine.crop_and_save()
 
         # infer_engine = Inference_engine(BACKBONE.value(), TRAIN_FOR.value(), f"{self.output_dir}/model{epoch+1}.pth")
