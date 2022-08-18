@@ -30,7 +30,7 @@ plt.style.use('Solarize_Light2')
 class engine():
 
     def __init__(self, BACKBONE, TRAIN_FOR, EPOCHS, MODEL_PATH = None):
-
+        print("Torch running on: ", torch.cuda.current_device())
         self.train_for = TRAIN_FOR
         
         if self.train_for == 'dolphin':
@@ -88,7 +88,7 @@ class engine():
                 self.model_path, map_location = DEVICE
                 ))
 
-            self.start_epoch = self.model_path.split('/')[-1]
+            self.start_epoch = os.path.basename(self.model_path)
             x = re.search("\d+", self.start_epoch)
             self.start_epoch = int(x.group())-1
 
