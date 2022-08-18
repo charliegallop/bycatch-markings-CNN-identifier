@@ -57,7 +57,7 @@ class engine():
         
         self.backbone = BACKBONE
         self.output_dir = os.path.join(OUT_DIR, self.train_for, self.backbone)
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         
         self.num_epochs = EPOCHS
         print("Num of Epochs: " ,self.num_epochs)
@@ -126,7 +126,13 @@ class engine():
 
         # get the model parameters
         self.params = [p for p in self.model.parameters() if p.requires_grad]
-        self.optimizer = optimizer = torch.optim.SGD(self.params, lr = self.learning_rate, momentum = 0.9, weight_decay = 0.0005)
+        self.optimizer = torch.optim.SGD(
+            self.params, 
+            lr = self.learning_rate, 
+            momentum = 0.9, 
+            nesterov=True ,
+            weight_decay = 0.0005
+            )
         #self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 25, gamma = 0.1)
         self.lr_scheduler_RLROP = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', min_lr = 0.000001, factor = 0.5)
 
@@ -150,7 +156,7 @@ class engine():
             "AR_0.5-0.95_medium", 
             "AR_0.5-0.95_large"
             ]
-
+        
     def save_map_stats(self, stats):
         headers = [
             "AP_0.5-0.95", 
@@ -171,6 +177,10 @@ class engine():
         df.to_csv(save_df_as)
 
     def run(self):
+        from torchinfo import summary
+        print("-"*50)
+        print(summary(self.model))
+        print("-"*50)
 
         prompt = input("Do you want to resplit the dataset? [y][n]")
 

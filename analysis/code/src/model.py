@@ -6,7 +6,7 @@ def create_model(num_classes, backbone, load_state_from = None):
 
     if backbone == 'resnet':
         # load Faster RCNN pre-trained model
-        model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+        model = torchvision.models.detection.fasterrcnn_resnet50_fpn_v2(FasterRCNN_ResNet50_FPN_V2_Weights = 'DEFAULT')
 
         # get the number of input features
         in_features = model.roi_heads.box_predictor.cls_score.in_features
