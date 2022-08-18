@@ -34,15 +34,5 @@ for s in sets:
 
         # save results
         save_to = os.path.join(ROOT_DIR, s, "images", image_name)
+        print("Saving to: ", save_to)
         cv2.imwrite(save_to, laplacian_norm)
-        # cv2.imwrite('barn_sobel_norm8.jpg', sobelx_norm8)
-
-        # # show results
-        # cv2.imshow('sobelx_norm1a', sobelx_norm1a)  
-        # cv2.imshow('sobelx_norm1b', sobelx_norm1b)  
-        # cv2.imshow('sobelx_norm8', sobelx_norm8) 
-        # print(sobelx_norm8.shape)
-        # print(img.shape)
-
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
