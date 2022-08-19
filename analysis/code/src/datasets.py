@@ -87,9 +87,6 @@ class BycatchDataset(Dataset):
                 # create 'dolphin' bounding box assuming it covers the whole image
                 boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
                 labels.append(0)
-
-        print("BOXS: ", boxes)
-        print("LABELS: ", labels)
         # bounding box to tensor
         boxes = torch.as_tensor(boxes, dtype = torch.float32)
         # area of the bounding boxes

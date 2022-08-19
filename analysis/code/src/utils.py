@@ -58,7 +58,6 @@ def get_train_transform():
 
 def make_save_xml(boxes, labels, WRITE_TO, label_name, img_size):
     label_name = label_name.split('.')[0]
-    print(img_size)
     img_width = img_size[1]
     img_height = img_size[0]
     img_depth = img_size[2]

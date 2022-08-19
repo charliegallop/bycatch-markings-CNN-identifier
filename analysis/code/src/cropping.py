@@ -294,6 +294,7 @@ class Cropping_engine():
             
 
             if (self.crop):
+                label_path =os.path.join(os.path.dirname(os.path.dirname(i)), "labels", f"{image_name}.xml")
                 if (len(box_to_crop) != 0):
                     print("Cropping image....")
                     sample = crop_transform(box_to_crop[0], box_to_crop[1],box_to_crop[2],box_to_crop[3], 
@@ -313,7 +314,7 @@ class Cropping_engine():
                         label_name = label_name,
                         img_size = cropped_img.shape
                         )
-
+                    print("Created new XML with cropped bboxes. Saved to: ", copy_to)
                     # cropped_img = self.crop_image(orig_image, box_to_crop)
 
                     write_to_dir = os.path.join(MASTER_MARKINGS_DIR, 'images', f'{image_name}.jpg')
@@ -321,6 +322,11 @@ class Cropping_engine():
                     print(f"Image {image_name} done... cropped and saved")
 
                 else:
+                    src= label_path
+                    dst=os.path.join(MASTER_MARKINGS_DIR, 'labels', f'{image_name}.xml')
+                    shutil.copy(src, dst)
+                    print("Kept original XML. Saved to: ", copy_to)
+
                     print(f"Image {image_name} not cropped but saved")
                     write_to_dir = os.path.join(MASTER_MARKINGS_DIR, 'images', f'{image_name}.jpg')
                     cv2.imwrite(write_to_dir, orig_image)
