@@ -166,7 +166,11 @@ class predict_engine():
         image_paths = glob.glob(f"{self.image_dir}/*")
         from config import TRAIN_FOR
         for image_path in image_paths:
-            cropping_engine = Cropping_engine(self.crop_backbone, TRAIN_FOR.value(), self.crop_model, IMAGES_DIR=self.image_dir)
+            cropping_engine = Cropping_engine(
+                BACKBONE = self.crop_backbone,
+                TRAIN_FOR= TRAIN_FOR.value(),
+                MODEL= self.crop_model,
+                 IMAGES_DIR=self.image_dir)
             cropped_image = cropping_engine.get_cropped_image(image_path)
             self.predict(cropped_image, image_path)
 

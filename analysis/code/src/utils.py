@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 import os
+from xml.etree import ElementTree as et
 
 from albumentations.pytorch import ToTensorV2
 from config import DEVICE
@@ -54,6 +55,136 @@ def get_train_transform():
         'format': 'pascal_voc',
         'label_fields': ['labels']
     })
+
+def make_save_xml(boxes, labels, WRITE_TO, label_name, img_size):
+    label_name = label_name.split('.')[0]
+    print(img_size)
+    img_width = img_size[1]
+    img_height = img_size[0]
+    img_depth = img_size[2]
+
+    label_list = [
+    'background',
+    'impression',
+    'dolphin',
+    'fin_slice',
+    'amputation',
+    'notch']
+
+    root = et.Element("annotation")
+
+    def create_subEl(parent, name, text=None):
+        subEl = et.SubElement(parent, name)
+        if text:
+            subEl.text = text
+        return subEl
+    
+    create_subEl(root, "folder", "images")
+    create_subEl(root, "filename", label_name)
+
+    source = create_subEl(root, "source")
+    create_subEl(source, "database", "MyDatabase")
+    create_subEl(source, "annotation", "COCO2017")
+    create_subEl(source, "image", "flickr")
+    create_subEl(source, "flickrid", "NULL")
+    create_subEl(source, "annotator", "1")
+
+    owner = create_subEl(root, "owner")
+    create_subEl(owner, "flickrid", "NULL")
+    create_subEl(owner, "name", "Label Studio")
+
+    size = create_subEl(root, "size")
+    create_subEl(size, "width", f"{img_width}")
+    create_subEl(size, "height", f"{img_height}")
+    create_subEl(size, "depth", f"{img_depth}")
+
+    size = create_subEl(root, "segmented", "0")
+
+    for i, box in enumerate(boxes):
+        object = create_subEl(root, "object")
+        create_subEl(object, "name", f"{label_list[labels[i]]}")
+        create_subEl(object, "pose", "Unspecified")
+        create_subEl(object, "truncated", "0")
+        create_subEl(object, "difficult", "0")
+        bndbox = create_subEl(object, "bndbox")
+        create_subEl(bndbox, "xmin", f"{int(box[0])}")
+        create_subEl(bndbox, "ymin", f"{int(box[1])}")
+        create_subEl(bndbox, "xmax", f"{int(box[2])}")
+        create_subEl(bndbox, "ymax", f"{int(box[3])}")
+
+    tree = et.ElementTree(root)
+    
+    filename = f"{label_name}.xml"
+    save_to = os.path.join(WRITE_TO, filename)
+    with open (save_to, "wb") as files :
+        tree.write(files)
+
+
+def get_orig_labels(image_path):
+    from xml.etree import ElementTree as et
+    label_dict = {
+        'background': 0,
+        'impression': 1,
+        'dolphin': 2,
+        'fin_slice': 2,
+        'amputation': 2,
+        'notch': 2,
+        }
+    label_name = os.path.basename(image_path).split('.')[0]
+    label_dir = os.path.dirname(os.path.dirname(image_path))
+    label_path = os.path.join(label_dir, 'labels', f"{label_name}.xml")
+    tree = et.parse(label_path)
+    root = tree.getroot()
+    labels = []
+    boxes = []
+    for member in root.findall('object'):
+        name = member.find('name').text
+        label = label_dict[name]
+        labels.append(label)
+
+        for box in member.findall('bndbox'):
+            xmin = int(box.find('xmin').text)
+            ymin = int(box.find('ymin').text)
+            xmax = int(box.find('xmax').text)
+            ymax = int(box.find('ymax').text)
+            box = [xmin, ymin, xmax, ymax]
+            boxes.append(box)
+    return boxes, labels
+
+def crop_transform(xmin, ymin, xmax, ymax, image, image_path):
+    buffer =0.05
+
+    coords = {
+        "ymin": ymin, 
+        "ymax": ymax, 
+        "xmin": xmin, 
+        "xmax": xmax
+        }
+    
+    img_width = image.shape[1]
+    img_height = image.shape[0]
+
+    # checks if adding the buffer would push the box over the edges of the image.
+    # If it doesn't it sets the new coordinate + buffer
+    if ((coords['ymin']  - img_height*buffer) > 0):
+        coords['ymin'] = int(coords['ymin']  - img_height*buffer)
+    if ((coords['xmin']  - img_width*buffer) > 0):
+        coords['xmin'] = int(coords['xmin']  - img_width*buffer)
+    if ((coords['ymax']  + img_height*buffer) < img_height):
+        coords['ymax'] = int(coords['ymax']  + img_height*buffer)
+    if ((coords['xmax']  + img_width*buffer) < img_width):
+        coords['xmax'] = int(coords['xmax']  + img_width*buffer)
+
+    bboxes, labels = get_orig_labels(image_path)
+    transform = A.Compose([
+        A.Crop(coords['xmin'],coords['ymin'],coords['xmax'],coords['ymax'], always_apply=True, p=1),
+        ToTensorV2(p=1.0)
+    ], bbox_params = {
+        'format': 'pascal_voc',
+        'label_fields': ['labels']
+    })
+
+    return transform(image=image, bboxes=bboxes, labels=labels)
 
 # define the validation transforms
 def get_valid_transform():

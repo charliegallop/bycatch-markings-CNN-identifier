@@ -57,7 +57,7 @@ class engine():
         
         self.backbone = BACKBONE
         self.output_dir = os.path.join(OUT_DIR, self.train_for, self.backbone)
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
         
         self.num_epochs = EPOCHS
         print("Num of Epochs: " ,self.num_epochs)

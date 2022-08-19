@@ -88,6 +88,8 @@ class BycatchDataset(Dataset):
                 boxes.append([background_bb['xmin_final'], background_bb['ymin_final'], background_bb['xmax_final'], background_bb['ymax_final']])
                 labels.append(0)
 
+        print("BOXS: ", boxes)
+        print("LABELS: ", labels)
         # bounding box to tensor
         boxes = torch.as_tensor(boxes, dtype = torch.float32)
         # area of the bounding boxes
@@ -105,6 +107,8 @@ class BycatchDataset(Dataset):
         target["iscrowd"] = iscrowd
         image_id = torch.tensor([idx])
         target["image_id"] = image_id
+        
+
         # apply the image transforms
         if self.transforms:
             sample = self.transforms(image = image_resized,

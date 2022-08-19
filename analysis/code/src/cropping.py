@@ -10,7 +10,7 @@ import torch
 from model import create_model
 from config import ROOT, NUM_EPOCHS, COLOURS, BACKBONE, THRESHOLD, TRAIN_FOR, RESIZE_TO
 from config import TEST_DIR, EVAL_DIR, VAL_DIR, MASTER_MARKINGS_DIR,  MARKINGS_DIR, TRAIN_DIR
-from utils import save_predictions_as_txt, save_metrics
+from utils import save_predictions_as_txt, save_metrics, crop_transform, make_save_xml
 from edit_xml import keep_labels
 
 class Cropping_engine():
@@ -78,6 +78,13 @@ class Cropping_engine():
     
     def crop_image(self, img, box):
         # buffer to add to the crop to account for any error of the box cropping too small
+
+        # if self.transforms:
+        #     sample = self.transforms(image = image_resized,
+        #     bboxes = target['boxes'],
+        #     labels = labels)
+        #     image_resized = sample['image']
+        #     target['boxes'] = torch.Tensor(sample['bboxes'])
         buffer =0.05
 
         coords = {
@@ -164,12 +171,12 @@ class Cropping_engine():
                         if area > max_area:
                             max_area = area
                             box_to_crop = box
-                
+            print(boxes)
             # check meant to be cropping and there are bounding box predictions 
             # to crop to.    
             if (self.crop) & (len(box_to_crop) != 0):
                 print("Cropping image...and sending to markings predictions")
-                cropped_img = self.crop_image(orig_image, box_to_crop)
+                cropped_img = self.crop_image(orig_image, box_to_crop, self_box=boxes)
                 return cropped_img
                 # write_to_dir = os.path.join(MASTER_MARKINGS_DIR, 'images', f'{image_name}.jpg')
                 # cv2.imwrite(write_to_dir, cropped_img)
@@ -234,6 +241,8 @@ class Cropping_engine():
             if len(outputs[0]['boxes']) != 0:
                 boxes = outputs[0]['boxes'].data.numpy()
                 scores = outputs[0]['scores'].data.numpy()
+                labels = outputs[0]['labels'].data.numpy()
+                
                 save_preds_to = os.path.join(EVAL_DIR, self.train_for, self.backbone)
                 pred_classes = [self.classes[i] for i in outputs[0]['labels'].cpu().numpy()]
 
@@ -242,22 +251,16 @@ class Cropping_engine():
 
                 # filter out boxes according to the detection threshold
                 boxes = boxes[scores >= self.detection_threshold].astype(np.int32)
+                labels = labels[scores >= self.detection_threshold].astype(np.int32)
                 draw_boxes = boxes.copy()
                 # get all the predicted class names
                 pred_classes = [self.classes[i] for i in outputs[0]['labels'].cpu().numpy()]
                 # draw the bounding boxes and write class name on top of it
-                print("DRAW_BOXES BEFORE IF: ", draw_boxes)
-                print("LEN DRAW_BOXES BEFORE IF: ", len(draw_boxes))
                 saved = False
+                
                 if len(draw_boxes) != 0:
-                    print("DRAW_BOXES AFTER IF: ", draw_boxes)
-                    print("LEN DRAW_BOXES AFTER IF: ", len(draw_boxes))
 
                     for j, box in enumerate(draw_boxes):
-                        print("J: ", j)
-                        print("DRAW_BOXES FOR: ", draw_boxes[j], draw_boxes)     
-                        print("BOX FOR: ", box, box)         
-
 
                         # only do this is self.crop is true which should only be for dophins
                         if self.crop:
@@ -288,11 +291,30 @@ class Cropping_engine():
                 write_to_dir = os.path.join(EVAL_DIR, self.train_for, self.backbone, "images", f'{image_name}.jpg')
                 cv2.imwrite(write_to_dir, orig_image)
 
+            
 
             if (self.crop):
                 if (len(box_to_crop) != 0):
                     print("Cropping image....")
-                    cropped_img = self.crop_image(orig_image, box_to_crop)
+                    sample = crop_transform(box_to_crop[0], box_to_crop[1],box_to_crop[2],box_to_crop[3], 
+                        image=orig_image,
+                        image_path= i
+                        )
+                    cropped_img = sample['image'].permute(1,2,0).numpy()
+                    cropped_boxes = sample['bboxes']
+                    cropped_labels = sample['labels']
+                    
+                    copy_to = os.path.join(MASTER_MARKINGS_DIR, 'labels')
+                    label_name = f"{image_name}.xml"
+                    make_save_xml(
+                        boxes = cropped_boxes,
+                        labels = cropped_labels, 
+                        WRITE_TO=copy_to, 
+                        label_name = label_name,
+                        img_size = cropped_img.shape
+                        )
+
+                    # cropped_img = self.crop_image(orig_image, box_to_crop)
 
                     write_to_dir = os.path.join(MASTER_MARKINGS_DIR, 'images', f'{image_name}.jpg')
                     cv2.imwrite(write_to_dir, cropped_img)
@@ -310,14 +332,7 @@ class Cropping_engine():
             print('-'*50)
         
         if (self.crop):
-            # move edited xml files with only dolphin label to directory
-            copy_to = os.path.join(MASTER_MARKINGS_DIR, 'labels')
-            keep_labels(
-                label_dir=self.labels_dir, 
-                WRITE_TO=copy_to, 
-                label_to_keep="dolphin"
-                )
-                
+            # copy edited xml files with only markings label to directory                
             copy_to = os.path.join(EVAL_DIR, self.train_for, self.backbone, "gt")
             keep_labels(
                 label_dir=self.labels_dir, 
