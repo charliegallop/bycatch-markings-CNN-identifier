@@ -1,6 +1,9 @@
 # bycatch-markings-CNN-identifier
 
-
+***
+src/training_app.py is launches an application where you can train a Faster R-CNN model
+src/trainig_engine.py is the main training engine
+***
 
 Resources used:
 
