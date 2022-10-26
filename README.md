@@ -3,9 +3,9 @@
 ***
 See requirements.txt for required packages.
 
-src/models/app_v0.2.py is the latest version of the app that can be used to train a model and make predictions. 
+src/model/app_v0.2.py is the latest version of the app that can be used to train a model and make predictions. 
 
-src/models/training_engine.py is the script that gets executed for performing the Faster R-CNN training through the app.
+src/model/training_engine.py is the script that gets executed for performing the Faster R-CNN training through the app.
 
 notebooks/EDA.ipynb contains the exploratory analysis of the stranding data.
 ***
