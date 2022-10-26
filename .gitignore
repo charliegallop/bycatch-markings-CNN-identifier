@@ -1,5 +1,6 @@
 analysis
 data
 references
+models/
 reports
 src/visualization/review_object_detection_metrics
