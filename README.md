@@ -1,8 +1,13 @@
 # bycatch-markings-CNN-identifier
 
 ***
-src/training_app.py is launches an application where you can train a Faster R-CNN model
-src/trainig_engine.py is the main training engine
+See requirements.txt for required packages.
+
+src/models/app_v0.2.py is the latest version of the app that can be used to train a model and make predictions. 
+
+src/models/training_engine.py is the script that gets executed for performing the Faster R-CNN training through the app.
+
+notebooks/EDA.ipynb contains the exploratory analysis of the stranding data.
 ***
 
 Resources used:
